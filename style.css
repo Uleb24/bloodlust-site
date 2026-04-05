@@ -10,6 +10,15 @@ html, body {
   overflow-x: hidden;
 }
 
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.site-footer {
+  margin-top: auto;
+}
+
 /* Subtle textured background using layered gradients */
 body {
   background:
