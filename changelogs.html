@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Changelogs | The Blood Lust</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav-bar">
+  <a href="index.html" class="nav-brand">Blood Lust</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="stats.html">Stats</a></li>
+    <li><a href="members.html">Members</a></li>
+    <li><a href="apply.html">Apply</a></li>
+    <li><a href="contact.html">Contact Us</a></li>
+  </ul>
+  <a id="auth-icon" class="auth-icon" href="login.html" title="Log In">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+      <circle cx="12" cy="7" r="4"></circle>
+    </svg>
+  </a>
+</nav>
+
+<article class="article">
+  <header class="article-header">
+    <div class="article-eyebrow">Website Updates</div>
+    <h1 class="article-title"><span>Changelogs</span></h1>
+  </header>
+
+  <div id="page-loading" style="color:#8b7c6f; font-style:italic; padding:40px 0;">Loading posts...</div>
+  <div id="posts-container" style="display:none;"></div>
+</article>
+
+<footer class="site-footer">
+  <div class="footer-brand">The <strong>Blood Lust</strong> Guild</div>
+  <div class="footer-tagline">Hypixel Network</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<script src="posts.js"></script>
+<script>
+let currentUserId = null;
+
+async function init() {
+  const result = await requireMember();
+  if (!result) return;
+  currentUserId = result.user.id;
+
+  await loadAndRender();
+}
+
+async function loadAndRender() {
+  const { posts, reactionsByPost, authorMap, error } = await loadPostsWithReactions('changelog');
+  document.getElementById('page-loading').style.display = 'none';
+  const container = document.getElementById('posts-container');
+  container.style.display = 'block';
+
+  if (error) {
+    container.innerHTML = '<div class="auth-error">Failed to load posts: ' + escapeHtmlPosts(error.message) + '</div>';
+    return;
+  }
+
+  if (!posts || posts.length === 0) {
+    container.innerHTML = '<div class="app-empty"><div class="app-empty-icon">◆</div><h2>No Changelogs Yet</h2><p>Website updates will appear here.</p></div>';
+    return;
+  }
+
+  container.innerHTML = posts.map(p => renderPost(p, currentUserId, reactionsByPost, authorMap)).join('');
+  attachReactionHandlers(currentUserId, loadAndRender);
+}
+
+init();
+</script>
+
+</body>
+</html>
