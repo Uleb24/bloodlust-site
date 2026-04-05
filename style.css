@@ -117,32 +117,22 @@ body {
 }
 
 .hero-title {
-  font-size: clamp(52px, 8vw, 104px);
-  line-height: 0.95;
-  letter-spacing: -2px;
+  font-size: clamp(32px, 5.5vw, 74px);
+  line-height: 1;
+  letter-spacing: -1px;
   text-transform: uppercase;
   font-weight: bold;
-}
-
-.hero-title .line-1 {
-  display: block;
   color: #e8e2dd;
+  white-space: nowrap;
 }
 
-.hero-title .line-2 {
-  display: block;
+.hero-title .title-accent {
   background: linear-gradient(90deg, #dc2626 0%, #ea580c 60%, #f97316 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-style: italic;
-  transform: translateX(20px);
-}
-
-.hero-title .line-3 {
-  display: block;
-  color: #e8e2dd;
-  transform: translateX(-10px);
+  padding: 0 8px;
 }
 
 .hero-mark {
@@ -1158,8 +1148,7 @@ body {
   .hero-inner { grid-template-columns: 1fr; gap: 30px; }
   .hero-mark { width: 120px; height: 120px; }
   .hero-mark span { font-size: 52px; }
-  .hero-title .line-2 { transform: translateX(0); }
-  .hero-title .line-3 { transform: translateX(0); }
+  .hero-title { white-space: normal; }
   .blocks { padding: 40px 20px; }
   .block { padding: 32px 24px; }
   .block:nth-child(2), .block:nth-child(3) { margin-left: 0; }
