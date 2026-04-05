@@ -2655,6 +2655,17 @@ body {
   font-size: 12px;
 }
 
+.admin-post-edit {
+  color: #AAAAAA !important;
+  border-color: rgba(170, 170, 170, 0.4) !important;
+}
+
+.admin-post-edit:hover {
+  color: #e8e2dd !important;
+  background: rgba(170, 170, 170, 0.12) !important;
+  border-color: #AAAAAA !important;
+}
+
 /* =========== RESPONSIVE =========== */
 @media (max-width: 900px) {
   .nav-bar { padding: 16px 20px; flex-direction: column; gap: 14px; }
