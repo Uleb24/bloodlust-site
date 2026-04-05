@@ -161,6 +161,14 @@ body {
   box-shadow: 0 0 16px rgba(249, 115, 22, 0.5);
 }
 
+/* Member role = bright green glow */
+.auth-icon.is-member {
+  color: #55FF55;
+  border-color: #55FF55;
+  background: rgba(85, 255, 85, 0.08);
+  box-shadow: 0 0 16px rgba(85, 255, 85, 0.45);
+}
+
 /* Auth icon with avatar image */
 .auth-icon.has-avatar {
   padding: 0;
@@ -971,6 +979,11 @@ body {
   background: linear-gradient(90deg, rgba(234, 88, 12, 0.08), rgba(20, 14, 14, 0.5) 60%);
 }
 
+.user-row-member {
+  border-left-color: #55FF55;
+  background: linear-gradient(90deg, rgba(85, 255, 85, 0.08), rgba(20, 14, 14, 0.5) 60%);
+}
+
 .user-info {
   flex: 1;
   min-width: 200px;
@@ -1003,6 +1016,11 @@ body {
   box-shadow: 0 0 10px rgba(234, 88, 12, 0.3);
 }
 
+.user-avatar-member {
+  border-color: #55FF55;
+  box-shadow: 0 0 10px rgba(85, 255, 85, 0.3);
+}
+
 .user-name {
   font-size: 15px;
   font-weight: bold;
@@ -1019,9 +1037,16 @@ body {
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: #0b0808;
-  background: #ea580c;
   padding: 2px 8px;
   font-weight: bold;
+}
+
+.user-role-tag-staff {
+  background: #ea580c;
+}
+
+.user-role-tag-member {
+  background: #55FF55;
 }
 
 .user-meta {
@@ -1055,6 +1080,43 @@ body {
 
 .admin-btn-demote:hover {
   background: rgba(255, 170, 0, 0.12);
+}
+
+/* Role change buttons */
+.user-role-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.admin-btn-role-player {
+  color: #b8b0a8;
+  border-color: rgba(139, 124, 111, 0.4);
+  padding: 8px 12px;
+  font-size: 12px;
+}
+.admin-btn-role-player:hover { background: rgba(139, 124, 111, 0.15); }
+
+.admin-btn-role-member {
+  color: #55FF55;
+  border-color: rgba(85, 255, 85, 0.4);
+  padding: 8px 12px;
+  font-size: 12px;
+}
+.admin-btn-role-member:hover {
+  background: rgba(85, 255, 85, 0.12);
+  box-shadow: 0 0 10px rgba(85, 255, 85, 0.25);
+}
+
+.admin-btn-role-staff {
+  color: #ff6b35;
+  border-color: rgba(234, 88, 12, 0.5);
+  padding: 8px 12px;
+  font-size: 12px;
+}
+.admin-btn-role-staff:hover {
+  background: rgba(234, 88, 12, 0.15);
+  box-shadow: 0 0 10px rgba(234, 88, 12, 0.25);
 }
 
 /* Removed application banner on applicant dashboard */
@@ -2275,6 +2337,312 @@ body {
   margin-top: 28px !important;
   letter-spacing: 2px;
   text-transform: uppercase;
+}
+
+/* =========== GUILD POSTS =========== */
+.post-card {
+  margin-bottom: 24px;
+  background: rgba(20, 14, 14, 0.6);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-left: 3px solid #ea580c;
+  padding: 24px 28px;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.post-card:hover {
+  background: rgba(30, 18, 18, 0.75);
+}
+
+.post-card-pinned {
+  border-left-color: #f97316;
+  background: linear-gradient(90deg, rgba(234, 88, 12, 0.08), rgba(20, 14, 14, 0.6) 70%);
+  box-shadow: 0 0 20px rgba(234, 88, 12, 0.1);
+}
+
+.post-pinned-badge {
+  position: absolute;
+  top: 14px;
+  right: 20px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #f97316;
+  font-weight: bold;
+  background: rgba(234, 88, 12, 0.15);
+  padding: 4px 10px;
+  border: 1px solid rgba(234, 88, 12, 0.4);
+}
+
+.post-card-header {
+  margin-bottom: 16px;
+}
+
+.post-card-title {
+  font-size: 22px;
+  font-weight: bold;
+  color: #e8e2dd;
+  letter-spacing: 0.3px;
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+
+.post-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #8b7c6f;
+  flex-wrap: wrap;
+}
+
+.post-author-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid rgba(139, 124, 111, 0.4);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8b7c6f;
+  background: rgba(6, 4, 4, 0.5);
+}
+
+.post-author-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.post-author-avatar.post-author-staff {
+  border-color: #ea580c;
+  box-shadow: 0 0 6px rgba(234, 88, 12, 0.3);
+}
+
+.post-author-name {
+  color: #d4ccc4;
+  font-weight: bold;
+  letter-spacing: 0.3px;
+}
+
+.post-meta-sep { color: #6b5d53; }
+
+.post-card-date {
+  color: #8b7c6f;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+}
+
+.post-card-body {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #d4ccc4;
+  margin-bottom: 20px;
+  word-wrap: break-word;
+}
+
+.post-card-body a {
+  color: #ff6b35;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(234, 88, 12, 0.3);
+  word-break: break-all;
+}
+
+.post-card-body a:hover { color: #f97316; }
+
+/* Reactions */
+.post-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(220, 38, 38, 0.15);
+}
+
+.reaction-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(6, 4, 4, 0.6);
+  border: 1px solid rgba(139, 124, 111, 0.25);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+}
+
+.reaction-btn:hover {
+  background: rgba(40, 24, 24, 0.85);
+  border-color: #ea580c;
+  transform: translateY(-1px);
+}
+
+.reaction-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.reaction-btn-active {
+  background: rgba(234, 88, 12, 0.2);
+  border-color: #ea580c;
+  box-shadow: 0 0 10px rgba(234, 88, 12, 0.2);
+}
+
+.reaction-emoji {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.reaction-count {
+  color: #ff6b35;
+  font-weight: bold;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.reaction-btn-active .reaction-count { color: #f97316; }
+
+/* Admin post management */
+.admin-posts-mgmt {
+  margin-top: 60px;
+  padding-top: 40px;
+  border-top: 1px solid rgba(220, 38, 38, 0.25);
+}
+
+.post-composer {
+  margin-bottom: 40px;
+  padding: 24px 28px;
+  background: rgba(20, 14, 14, 0.5);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-left: 3px solid #ea580c;
+}
+
+.post-composer-header {
+  margin-bottom: 20px;
+}
+
+.post-composer .subsection-heading {
+  margin: 0;
+}
+
+.post-type-select {
+  width: 100%;
+  padding: 12px 14px;
+  background: rgba(6, 4, 4, 0.7);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-left: 3px solid rgba(234, 88, 12, 0.5);
+  color: #e8e2dd;
+  font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.post-type-select:focus {
+  outline: none;
+  border-color: #ea580c;
+}
+
+.post-pinned-wrapper { margin-bottom: 18px; }
+
+.post-pinned-label {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  color: #d4ccc4 !important;
+  font-size: 14px !important;
+  font-weight: normal !important;
+}
+
+.post-pinned-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #ea580c;
+}
+
+.post-form-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.post-list-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.post-list-tab {
+  padding: 10px 18px;
+  background: rgba(20, 14, 14, 0.6);
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  color: #b8b0a8;
+  font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.post-list-tab:hover {
+  background: rgba(40, 24, 24, 0.9);
+  color: #ff6b35;
+}
+
+.post-list-tab.active {
+  background: linear-gradient(135deg, rgba(139, 0, 0, 0.5), rgba(234, 88, 12, 0.25));
+  border-color: #ea580c;
+  color: #ff6b35;
+}
+
+.admin-post-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: rgba(20, 14, 14, 0.5);
+  border-left: 3px solid rgba(139, 124, 111, 0.3);
+  margin-bottom: 4px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-post-row:hover { background: rgba(30, 18, 18, 0.7); }
+
+.admin-post-pinned { border-left-color: #f97316; }
+
+.admin-post-info { flex: 1; min-width: 200px; }
+
+.admin-post-title {
+  font-size: 15px;
+  font-weight: bold;
+  color: #e8e2dd;
+  margin-bottom: 3px;
+}
+
+.admin-post-date {
+  font-size: 12px;
+  color: #8b7c6f;
+}
+
+.admin-post-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.admin-post-actions .admin-btn {
+  padding: 8px 14px;
+  font-size: 12px;
 }
 
 /* =========== RESPONSIVE =========== */
