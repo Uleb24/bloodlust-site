@@ -78,6 +78,12 @@ async function updateAuthUI() {
 
     const canSeeGuildContent = isStaff || isMember;
 
+    // Add a flex spacer that pushes auth nav items to the right
+    const spacer = document.createElement('li');
+    spacer.className = 'nav-auth-item nav-auth-spacer';
+    spacer.setAttribute('aria-hidden', 'true');
+    navLinks.appendChild(spacer);
+
     // Add Changelogs link (members + staff only)
     if (canSeeGuildContent) {
       const changelogsLi = document.createElement('li');
