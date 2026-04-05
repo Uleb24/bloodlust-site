@@ -1118,6 +1118,49 @@ body {
   color: #aaffaa;
 }
 
+/* Password field with visibility toggle */
+.password-wrapper {
+  position: relative;
+}
+
+.password-wrapper input {
+  padding-right: 48px !important;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #8b7c6f;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+  border-radius: 3px;
+}
+
+.password-toggle:hover {
+  color: #ff6b35;
+}
+
+.password-toggle:focus {
+  outline: none;
+  color: #ea580c;
+}
+
+.password-hint {
+  font-size: 12px;
+  color: #8b7c6f;
+  font-style: italic;
+  margin-top: 6px;
+  letter-spacing: 0.3px;
+}
+
 /* =========== HERO =========== */
 .hero {
   padding: 100px 48px 80px;
