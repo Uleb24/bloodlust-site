@@ -242,31 +242,15 @@ async function initDashboard() {
 }
 
 async function loadMemberPosts(currentUserId) {
-  // Load latest 3 updates + 3 changelogs combined, sort by pinned + date
-  const [updatesRes, changelogsRes] = await Promise.all([
-    loadPostsWithReactions('update', 3),
-    loadPostsWithReactions('changelog', 3),
-  ]);
+  // Load latest guild updates only (not changelogs)
+  const { posts, reactionsByPost, authorMap } = await loadPostsWithReactions('update', 4);
 
-  const allPosts = [...(updatesRes.posts || []), ...(changelogsRes.posts || [])];
-  const mergedReactions = { ...updatesRes.reactionsByPost, ...changelogsRes.reactionsByPost };
-  const mergedAuthors = { ...updatesRes.authorMap, ...changelogsRes.authorMap };
-
-  if (allPosts.length === 0) return;
-
-  // Sort: pinned first, then by date
-  allPosts.sort((a, b) => {
-    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-    return new Date(b.created_at) - new Date(a.created_at);
-  });
-
-  // Only show top 4
-  const top = allPosts.slice(0, 4);
+  if (!posts || posts.length === 0) return;
 
   document.getElementById('member-posts-section').style.display = 'block';
   const container = document.getElementById('dashboard-posts-container');
-  container.innerHTML = top.map(p => renderPost(p, currentUserId, mergedReactions, mergedAuthors)).join('')
-    + '<div style="text-align:right; margin-top:16px;"><a href="guild-updates.html" style="color:#ff6b35; text-decoration:none; border-bottom:1px solid rgba(234,88,12,0.4); font-size:13px; letter-spacing:1px; text-transform:uppercase; margin-right:16px;">All Guild Updates →</a> <a href="changelogs.html" style="color:#ff6b35; text-decoration:none; border-bottom:1px solid rgba(234,88,12,0.4); font-size:13px; letter-spacing:1px; text-transform:uppercase;">All Changelogs →</a></div>';
+  container.innerHTML = posts.map(p => renderPost(p, currentUserId, reactionsByPost, authorMap)).join('')
+    + '<div style="text-align:right; margin-top:16px;"><a href="guild-updates.html" style="color:#ff6b35; text-decoration:none; border-bottom:1px solid rgba(234,88,12,0.4); font-size:13px; letter-spacing:1px; text-transform:uppercase;">All Guild Updates →</a></div>';
   attachReactionHandlers(currentUserId, () => loadMemberPosts(currentUserId));
 }
 
