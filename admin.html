@@ -554,13 +554,21 @@ let editingPostId = null;
 let isOwner = false;
 
 async function loadAdminPosts() {
-  const [cl, up] = await Promise.all([
-    supabase.from('guild_posts').select('*').eq('type', 'changelog').order('pinned', {ascending:false}).order('created_at', {ascending:false}),
-    supabase.from('guild_posts').select('*').eq('type', 'update').order('pinned', {ascending:false}).order('created_at', {ascending:false}),
-  ]);
-  allChangelogs = cl.data || [];
-  allUpdates = up.data || [];
-  document.getElementById('count-changelogs').textContent = allChangelogs.length;
+  // Only owner loads changelogs
+  if (isOwner) {
+    const [cl, up] = await Promise.all([
+      supabase.from('guild_posts').select('*').eq('type', 'changelog').order('pinned', {ascending:false}).order('created_at', {ascending:false}),
+      supabase.from('guild_posts').select('*').eq('type', 'update').order('pinned', {ascending:false}).order('created_at', {ascending:false}),
+    ]);
+    allChangelogs = cl.data || [];
+    allUpdates = up.data || [];
+    document.getElementById('count-changelogs').textContent = allChangelogs.length;
+  } else {
+    // Non-owners only load updates
+    const up = await supabase.from('guild_posts').select('*').eq('type', 'update').order('pinned', {ascending:false}).order('created_at', {ascending:false});
+    allChangelogs = [];
+    allUpdates = up.data || [];
+  }
   document.getElementById('count-updates').textContent = allUpdates.length;
   renderAdminPostList();
 }
