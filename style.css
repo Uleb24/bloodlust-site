@@ -293,6 +293,34 @@ body {
   letter-spacing: 0.5px;
 }
 
+/* Welcome banner for new users */
+.welcome-banner {
+  margin-bottom: 32px;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, rgba(139, 0, 0, 0.35), rgba(234, 88, 12, 0.18) 60%, rgba(20, 14, 14, 0.8));
+  border: 1px solid rgba(234, 88, 12, 0.5);
+  border-left: 4px solid #ea580c;
+  box-shadow: 0 0 30px rgba(234, 88, 12, 0.15);
+}
+
+.welcome-banner-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #ff6b35;
+  margin-bottom: 10px;
+  letter-spacing: 0.5px;
+}
+
+.welcome-banner-body {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #d4ccc4;
+}
+
+.welcome-banner-body strong {
+  color: #ff6b35;
+}
+
 /* Auth dropdown menu */
 .auth-menu {
   position: absolute;
