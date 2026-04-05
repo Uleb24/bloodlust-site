@@ -317,8 +317,18 @@ function renderUser(u) {
   const discord = u.discord ? escapeHtml(u.discord) : '<em style="color:#6b5d53;">no discord</em>';
   const joined = u.created_at ? fmtDate(u.created_at) : '';
 
+  const avatarHtml = u.avatar_url
+    ? `<div class="user-avatar ${isStaff ? 'user-avatar-staff' : ''}"><img src="${escapeHtml(u.avatar_url)}" alt="avatar"></div>`
+    : `<div class="user-avatar user-avatar-default ${isStaff ? 'user-avatar-staff' : ''}">
+         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+           <circle cx="12" cy="7" r="4"></circle>
+         </svg>
+       </div>`;
+
   return `
     <div class="user-row ${isStaff ? 'user-row-staff' : ''}">
+      ${avatarHtml}
       <div class="user-info">
         <div class="user-name">${escapeHtml(displayIgn)} ${isStaff ? '<span class="user-role-tag">Staff</span>' : ''}</div>
         <div class="user-meta">${discord} &middot; Joined ${joined}</div>
