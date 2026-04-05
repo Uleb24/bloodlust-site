@@ -53,6 +53,54 @@
       <div id="user-list-container"></div>
     </section>
 
+    <section class="admin-posts-mgmt">
+      <h2 class="section-heading">Guild Posts</h2>
+      <p style="color:#8b7c6f; font-style:italic; margin-bottom:20px;">Create posts for Changelogs (website updates) or Guild Updates (guild/Discord news). Members and staff can view and react to them.</p>
+
+      <div class="post-composer">
+        <div class="post-composer-header">
+          <h3 class="subsection-heading" id="composer-title">Create New Post</h3>
+        </div>
+        <form id="post-form" onsubmit="return savePost(event)">
+          <input type="hidden" id="post-id">
+          <div class="form-group">
+            <label for="post-type">Type</label>
+            <select id="post-type" class="post-type-select">
+              <option value="changelog">Changelog (Website Updates)</option>
+              <option value="update">Guild Update (Guild/Discord News)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="post-title">Title</label>
+            <input type="text" id="post-title" required maxlength="200">
+          </div>
+          <div class="form-group">
+            <label for="post-body">Body</label>
+            <textarea id="post-body" rows="6" required></textarea>
+          </div>
+          <div class="form-group post-pinned-wrapper">
+            <label class="post-pinned-label">
+              <input type="checkbox" id="post-pinned">
+              <span>Pin this post to the top</span>
+            </label>
+          </div>
+          <div id="post-save-msg" class="auth-error" style="display:none;"></div>
+          <div class="post-form-actions">
+            <button type="submit" class="submit-button" id="post-save-btn">Create Post</button>
+            <button type="button" class="admin-btn" id="post-cancel-btn" style="display:none;">Cancel Edit</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="post-list-section">
+        <div class="post-list-tabs">
+          <button class="post-list-tab" data-list-type="changelog">Changelogs <span id="count-changelogs" class="admin-filter-count">0</span></button>
+          <button class="post-list-tab active" data-list-type="update">Guild Updates <span id="count-updates" class="admin-filter-count">0</span></button>
+        </div>
+        <div id="posts-admin-list"></div>
+      </div>
+    </section>
+
   </div>
 
   <div id="admin-loading" style="color:#8b7c6f; font-style:italic; padding:40px 0;">Loading applications...</div>
@@ -312,33 +360,50 @@ let currentStaffUserId = null;
 
 function renderUser(u) {
   const isSelf = u.id === currentStaffUserId;
-  const isStaff = u.role === 'staff';
   const displayIgn = u.ign || '(no IGN set)';
   const discord = u.discord ? escapeHtml(u.discord) : '<em style="color:#6b5d53;">no discord</em>';
   const joined = u.created_at ? fmtDate(u.created_at) : '';
 
   const avatarHtml = u.avatar_url
-    ? `<div class="user-avatar ${isStaff ? 'user-avatar-staff' : ''}"><img src="${escapeHtml(u.avatar_url)}" alt="avatar"></div>`
-    : `<div class="user-avatar user-avatar-default ${isStaff ? 'user-avatar-staff' : ''}">
+    ? `<div class="user-avatar user-avatar-${u.role}"><img src="${escapeHtml(u.avatar_url)}" alt="avatar"></div>`
+    : `<div class="user-avatar user-avatar-default user-avatar-${u.role}">
          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
            <circle cx="12" cy="7" r="4"></circle>
          </svg>
        </div>`;
 
+  // Role tag
+  let roleTag = '';
+  if (u.role === 'staff') roleTag = '<span class="user-role-tag user-role-tag-staff">Staff</span>';
+  else if (u.role === 'member') roleTag = '<span class="user-role-tag user-role-tag-member">Member</span>';
+
+  // Role change buttons (show buttons for roles other than current)
+  let actionsHtml = '';
+  if (isSelf) {
+    actionsHtml = '<span class="user-self-note">(you)</span>';
+  } else {
+    const buttons = [];
+    if (u.role !== 'player') {
+      buttons.push(`<button class="admin-btn admin-btn-role-player" data-action="player" data-id="${u.id}" data-name="${escapeHtml(displayIgn)}">Make Player</button>`);
+    }
+    if (u.role !== 'member') {
+      buttons.push(`<button class="admin-btn admin-btn-role-member" data-action="member" data-id="${u.id}" data-name="${escapeHtml(displayIgn)}">Make Member</button>`);
+    }
+    if (u.role !== 'staff') {
+      buttons.push(`<button class="admin-btn admin-btn-role-staff" data-action="staff" data-id="${u.id}" data-name="${escapeHtml(displayIgn)}">Make Staff</button>`);
+    }
+    actionsHtml = `<div class="user-role-actions">${buttons.join('')}</div>`;
+  }
+
   return `
-    <div class="user-row ${isStaff ? 'user-row-staff' : ''}">
+    <div class="user-row user-row-${u.role}">
       ${avatarHtml}
       <div class="user-info">
-        <div class="user-name">${escapeHtml(displayIgn)} ${isStaff ? '<span class="user-role-tag">Staff</span>' : ''}</div>
+        <div class="user-name">${escapeHtml(displayIgn)} ${roleTag}</div>
         <div class="user-meta">${discord} &middot; Joined ${joined}</div>
       </div>
-      ${isSelf
-        ? '<span class="user-self-note">(you)</span>'
-        : isStaff
-          ? `<button class="admin-btn admin-btn-demote" data-action="demote" data-id="${u.id}" data-name="${escapeHtml(displayIgn)}">Demote to Player</button>`
-          : `<button class="admin-btn admin-btn-promote" data-action="promote" data-id="${u.id}" data-name="${escapeHtml(displayIgn)}">Promote to Staff</button>`
-      }
+      ${actionsHtml}
     </div>
   `;
 }
@@ -357,9 +422,12 @@ function renderUserList() {
     container.innerHTML = '<div style="color:#6b5d53; font-style:italic; padding:12px 0;">No users match.</div>';
     return;
   }
-  // Show staff first, then players
+  // Show staff first, then members, then players
+  const roleOrder = { staff: 0, member: 1, player: 2 };
   filtered.sort((a, b) => {
-    if (a.role !== b.role) return a.role === 'staff' ? -1 : 1;
+    const ao = roleOrder[a.role] ?? 3;
+    const bo = roleOrder[b.role] ?? 3;
+    if (ao !== bo) return ao - bo;
     return (a.ign || '').localeCompare(b.ign || '');
   });
   container.innerHTML = filtered.map(renderUser).join('');
@@ -367,27 +435,29 @@ function renderUserList() {
 }
 
 function attachUserActionHandlers() {
-  document.querySelectorAll('.admin-btn-promote, .admin-btn-demote').forEach(btn => {
+  document.querySelectorAll('.admin-btn-role-player, .admin-btn-role-member, .admin-btn-role-staff').forEach(btn => {
     btn.addEventListener('click', handleRoleChange);
   });
 }
 
 async function handleRoleChange(e) {
   const btn = e.currentTarget;
-  const action = btn.dataset.action;
+  const newRole = btn.dataset.action;
   const id = btn.dataset.id;
   const name = btn.dataset.name;
 
+  const roleLabels = { player: 'Player', member: 'Member', staff: 'Staff' };
   let confirmMsg;
-  if (action === 'promote') {
-    confirmMsg = `Are you sure you want to promote ${name} to staff?\n\nThey will have full access to:\n- Accept, deny, and hide applications\n- Promote and demote other users\n- View all user data\n\nOnly promote people you trust.`;
+  if (newRole === 'staff') {
+    confirmMsg = `Are you sure you want to make ${name} a STAFF member?\n\nThey will have full access to:\n- Accept, deny, and hide applications\n- Promote and demote other users\n- Post to Changelogs and Guild Updates\n- View all user data\n\nOnly promote people you trust.`;
+  } else if (newRole === 'member') {
+    confirmMsg = `Make ${name} a guild Member?\n\nThey will be able to:\n- View Changelogs and Guild Updates\n- React to posts`;
   } else {
-    confirmMsg = `Are you sure you want to demote ${name} back to player?\n\nThey will lose all staff permissions immediately.`;
+    confirmMsg = `Set ${name} back to Player role?\n\nThey will lose access to Changelogs, Guild Updates, and all staff permissions (if they had any).`;
   }
 
   if (!confirm(confirmMsg)) return;
 
-  const newRole = action === 'promote' ? 'staff' : 'player';
   btn.disabled = true;
   btn.textContent = 'Saving...';
 
@@ -401,11 +471,10 @@ async function handleRoleChange(e) {
   if (error) {
     alert('Role change failed: ' + error.message);
     btn.disabled = false;
-    btn.textContent = action === 'promote' ? 'Promote to Staff' : 'Demote to Player';
+    btn.textContent = `Make ${roleLabels[newRole]}`;
     return;
   }
 
-  // Update local copy
   const idx = allUsers.findIndex(u => u.id === id);
   if (idx >= 0) allUsers[idx] = data;
   renderUserList();
@@ -473,6 +542,171 @@ async function initAdmin() {
 }
 
 initAdmin();
+
+// ==========================================
+// POST MANAGEMENT
+// ==========================================
+const OWNER_USER_ID = '6c7d5f18-025e-4b8f-b2e9-a639a02ab624';
+let allChangelogs = [];
+let allUpdates = [];
+let currentListType = 'update';
+let editingPostId = null;
+let isOwner = false;
+
+async function loadAdminPosts() {
+  const [cl, up] = await Promise.all([
+    supabase.from('guild_posts').select('*').eq('type', 'changelog').order('pinned', {ascending:false}).order('created_at', {ascending:false}),
+    supabase.from('guild_posts').select('*').eq('type', 'update').order('pinned', {ascending:false}).order('created_at', {ascending:false}),
+  ]);
+  allChangelogs = cl.data || [];
+  allUpdates = up.data || [];
+  document.getElementById('count-changelogs').textContent = allChangelogs.length;
+  document.getElementById('count-updates').textContent = allUpdates.length;
+  renderAdminPostList();
+}
+
+function renderAdminPostList() {
+  const container = document.getElementById('posts-admin-list');
+  const posts = currentListType === 'changelog' ? allChangelogs : allUpdates;
+  if (posts.length === 0) {
+    container.innerHTML = '<div style="color:#6b5d53; font-style:italic; padding:20px 0;">No posts yet.</div>';
+    return;
+  }
+  container.innerHTML = posts.map(p => {
+    // For changelog posts, only owner can edit/delete
+    const canModify = p.type === 'update' || isOwner;
+    const actionsHtml = canModify
+      ? `<div class="admin-post-actions">
+           <button class="admin-btn admin-post-edit" data-id="${p.id}">Edit</button>
+           <button class="admin-btn admin-btn-delete admin-post-delete" data-id="${p.id}">Delete</button>
+         </div>`
+      : '<div style="font-size:11px; color:#6b5d53; letter-spacing:1px; text-transform:uppercase; font-style:italic;">Owner only</div>';
+    return `
+    <div class="admin-post-row ${p.pinned ? 'admin-post-pinned' : ''}">
+      <div class="admin-post-info">
+        <div class="admin-post-title">${p.pinned ? '📌 ' : ''}${escapeHtml(p.title)}</div>
+        <div class="admin-post-date">${fmtDate(p.created_at)}</div>
+      </div>
+      ${actionsHtml}
+    </div>
+  `;
+  }).join('');
+  container.querySelectorAll('.admin-post-edit').forEach(b => b.addEventListener('click', () => startEditPost(b.dataset.id)));
+  container.querySelectorAll('.admin-post-delete').forEach(b => b.addEventListener('click', () => deletePost(b.dataset.id)));
+}
+
+function startEditPost(id) {
+  const all = [...allChangelogs, ...allUpdates];
+  const post = all.find(p => p.id === id);
+  if (!post) return;
+  editingPostId = id;
+  document.getElementById('post-id').value = id;
+  document.getElementById('post-type').value = post.type;
+  document.getElementById('post-type').disabled = true;
+  document.getElementById('post-title').value = post.title;
+  document.getElementById('post-body').value = post.body;
+  document.getElementById('post-pinned').checked = post.pinned;
+  document.getElementById('composer-title').textContent = 'Edit Post';
+  document.getElementById('post-save-btn').textContent = 'Save Changes';
+  document.getElementById('post-cancel-btn').style.display = 'inline-block';
+  document.getElementById('post-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelEdit() {
+  editingPostId = null;
+  document.getElementById('post-form').reset();
+  document.getElementById('post-id').value = '';
+  document.getElementById('post-type').disabled = false;
+  document.getElementById('composer-title').textContent = 'Create New Post';
+  document.getElementById('post-save-btn').textContent = 'Create Post';
+  document.getElementById('post-cancel-btn').style.display = 'none';
+  document.getElementById('post-save-msg').style.display = 'none';
+}
+
+async function savePost(e) {
+  e.preventDefault();
+  const msgEl = document.getElementById('post-save-msg');
+  msgEl.style.display = 'none';
+  msgEl.classList.remove('success');
+
+  const { data: { user } } = await supabase.auth.getUser();
+  const postData = {
+    type: document.getElementById('post-type').value,
+    title: document.getElementById('post-title').value.trim(),
+    body: document.getElementById('post-body').value.trim(),
+    pinned: document.getElementById('post-pinned').checked,
+  };
+
+  const saveBtn = document.getElementById('post-save-btn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving...';
+
+  let result;
+  if (editingPostId) {
+    postData.updated_at = new Date().toISOString();
+    result = await supabase.from('guild_posts').update(postData).eq('id', editingPostId);
+  } else {
+    postData.author_id = user.id;
+    result = await supabase.from('guild_posts').insert(postData);
+  }
+
+  saveBtn.disabled = false;
+
+  if (result.error) {
+    msgEl.textContent = 'Error: ' + result.error.message;
+    msgEl.style.display = 'block';
+    saveBtn.textContent = editingPostId ? 'Save Changes' : 'Create Post';
+    return false;
+  }
+
+  msgEl.textContent = editingPostId ? 'Post updated!' : 'Post created!';
+  msgEl.classList.add('success');
+  msgEl.style.display = 'block';
+  setTimeout(() => { msgEl.style.display = 'none'; }, 3000);
+
+  cancelEdit();
+  await loadAdminPosts();
+  return false;
+}
+
+async function deletePost(id) {
+  if (!confirm('Permanently delete this post? This cannot be undone.')) return;
+  const { error } = await supabase.from('guild_posts').delete().eq('id', id);
+  if (error) {
+    alert('Delete failed: ' + error.message);
+    return;
+  }
+  await loadAdminPosts();
+}
+
+// Wire up post management after admin init
+setTimeout(async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  isOwner = user && user.id === OWNER_USER_ID;
+
+  // Hide Changelog option from dropdown if not owner
+  if (!isOwner) {
+    const typeSelect = document.getElementById('post-type');
+    const changelogOption = typeSelect.querySelector('option[value="changelog"]');
+    if (changelogOption) changelogOption.remove();
+    typeSelect.value = 'update';
+
+    // Hide the Changelogs tab
+    const clTab = document.querySelector('.post-list-tab[data-list-type="changelog"]');
+    if (clTab) clTab.style.display = 'none';
+  }
+
+  document.getElementById('post-cancel-btn').addEventListener('click', cancelEdit);
+  document.querySelectorAll('.post-list-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.post-list-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentListType = tab.dataset.listType;
+      renderAdminPostList();
+    });
+  });
+  loadAdminPosts();
+}, 500);
 </script>
 
 </body>
