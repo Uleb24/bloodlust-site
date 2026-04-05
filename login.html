@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -34,38 +35,40 @@
 
   <form class="apply-form login-form" id="auth-form" onsubmit="return handleAuth(event)">
 
-    <div class="form-group">
-      <label for="email">Email</label>
-      <input type="email" id="email" name="email" required autocomplete="email">
-    </div>
+```
+<div class="form-group">
+  <label for="email">Email</label>
+  <input type="email" id="email" name="email" required autocomplete="email">
+</div>
 
-    <div class="form-group">
-      <label for="password">Password</label>
-      <div class="password-wrapper">
-        <input type="password" id="password" name="password" required minlength="6" autocomplete="current-password">
-        <button type="button" class="password-toggle" id="password-toggle" aria-label="Show password" tabindex="-1">
-          <svg class="password-eye-show" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-            <circle cx="12" cy="12" r="3"></circle>
-          </svg>
-          <svg class="password-eye-hide" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
-            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-            <line x1="1" y1="1" x2="23" y2="23"></line>
-          </svg>
-        </button>
-      </div>
-      <div class="password-hint" id="password-hint" style="display:none;">At least 6 characters</div>
-    </div>
+<div class="form-group">
+  <label for="password">Password</label>
+  <div class="password-wrapper">
+    <input type="password" id="password" name="password" required minlength="6" autocomplete="current-password">
+    <button type="button" class="password-toggle" id="password-toggle" aria-label="Show password" tabindex="-1">
+      <svg class="password-eye-show" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+      <svg class="password-eye-hide" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+        <line x1="1" y1="1" x2="23" y2="23"></line>
+      </svg>
+    </button>
+  </div>
+  <div class="password-hint" id="password-hint" style="display:none;">At least 6 characters</div>
+</div>
 
-    <div class="auth-error" id="auth-error" style="display:none;"></div>
+<div class="auth-error" id="auth-error" style="display:none;"></div>
 
-    <div class="form-submit-area">
-      <button type="submit" class="submit-button" id="auth-submit">Log In</button>
-      <div class="auth-toggle">
-        <span id="auth-toggle-text">Don't have an account?</span>
-        <a href="#" id="auth-toggle-link">Sign up</a>
-      </div>
-    </div>
+<div class="form-submit-area">
+  <button type="submit" class="submit-button" id="auth-submit">Log In</button>
+  <div class="auth-toggle">
+    <span id="auth-toggle-text">Don't have an account?</span>
+    <a href="#" id="auth-toggle-link">Sign up</a>
+  </div>
+</div>
+```
 
   </form>
 
@@ -77,15 +80,18 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script src="config.js"></script>
+
 <script src="auth.js"></script>
+
 <script>
 let mode = 'login'; // or 'signup'
 
 // Check if we should return to a specific page after login
 const urlParams = new URLSearchParams(window.location.search);
 const returnTo = urlParams.get('return');
-const returnPage = returnTo === 'apply' ? 'apply.html' : 'dashboard.html';
+const returnPage = returnTo === 'apply' ? 'apply.html' : 'profile.html';
 
 const titleEl = document.getElementById('auth-title');
 const eyebrowEl = document.getElementById('auth-eyebrow');
