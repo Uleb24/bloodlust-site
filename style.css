@@ -1348,6 +1348,78 @@ body {
   transform: translateY(0);
 }
 
+/* =========== DISCORD SECTION =========== */
+.discord-section {
+  max-width: 1200px;
+  margin: 0 auto 80px;
+  padding: 0 48px;
+}
+
+.discord-inner {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 28px 36px;
+  background: linear-gradient(135deg, rgba(88, 101, 242, 0.15), rgba(20, 14, 14, 0.8) 70%);
+  border: 1px solid rgba(88, 101, 242, 0.3);
+  border-left: 4px solid #5865F2;
+  flex-wrap: wrap;
+}
+
+.discord-icon {
+  color: #5865F2;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 8px rgba(88, 101, 242, 0.4));
+}
+
+.discord-text {
+  flex: 1;
+  min-width: 240px;
+}
+
+.discord-title {
+  font-size: 17px;
+  color: #e8e2dd;
+  margin-bottom: 4px;
+  font-weight: bold;
+}
+
+.discord-subtitle {
+  font-size: 14px;
+  color: #8b7c6f;
+  letter-spacing: 0.5px;
+}
+
+.discord-button {
+  display: inline-block;
+  padding: 14px 28px;
+  font-family: "Trebuchet MS", sans-serif;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: #fff;
+  background: #5865F2;
+  border: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(88, 101, 242, 0.4);
+  flex-shrink: 0;
+}
+
+.discord-button:hover {
+  background: #4752c4;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(88, 101, 242, 0.6);
+}
+
+@media (max-width: 700px) {
+  .discord-section { padding: 0 20px; margin-bottom: 50px; }
+  .discord-inner { padding: 20px 22px; gap: 16px; }
+  .discord-title { font-size: 15px; }
+  .discord-button { padding: 12px 20px; font-size: 12px; }
+}
+
 /* =========== FOOTER =========== */
 .site-footer {
   border-top: 1px solid rgba(220, 38, 38, 0.25);
