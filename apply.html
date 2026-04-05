@@ -417,13 +417,7 @@
 </footer>
 
 <script>
-// ==== FORMSPREE SETUP ====
-// To enable automatic email sending (no email client popup):
-// 1. Go to https://formspree.io and create a free account using bloodguildofficial@gmail.com
-// 2. Click "New Form", give it a name like "Blood Lust Applications"
-// 3. Copy your form's endpoint URL (looks like: https://formspree.io/f/abcd1234)
-// 4. Replace the URL below with your real one
-// Until this is done, the submit button falls back to opening the user's email client.
+
 const FORMSPREE_URL = 'https://formspree.io/f/YOUR_FORM_ID';
 
 const REQUIREMENTS = [{"key": "achievement_points", "name": "Achievement Points", "normal": 17000, "outstanding": 23000, "unit": ""}, {"key": "quests", "name": "Quests", "normal": 10000, "outstanding": 20000, "unit": ""}, {"key": "bedwars", "name": "BedWars", "normal": 800, "outstanding": 1500, "unit": "\u2605"}, {"key": "skywars", "name": "Skywars", "normal": 60, "outstanding": 100, "unit": "\u2605"}, {"key": "duels", "name": "Duels", "normal": 25000, "outstanding": 80000, "unit": "Wins"}, {"key": "tnt_run", "name": "TNT Run", "normal": 1000, "outstanding": 10000, "unit": "Wins"}, {"key": "pvp_run", "name": "PVP Run", "normal": 1000, "outstanding": 4000, "unit": "Wins"}, {"key": "tnt_tag", "name": "TNT Tag", "normal": 750, "outstanding": 5000, "unit": "Wins"}, {"key": "bow_spleef", "name": "Bow Spleef", "normal": 1000, "outstanding": 5000, "unit": "Wins"}, {"key": "wizards", "name": "Wizards", "normal": 1000, "outstanding": 5000, "unit": "Wins"}, {"key": "cvc_defusal", "name": "CvC Defusal", "normal": 10000, "outstanding": 35000, "unit": "Kills"}, {"key": "cvc_tdm", "name": "CvC TDM", "normal": 25000, "outstanding": 60000, "unit": "Kills"}, {"key": "paintball", "name": "Paintball", "normal": 50000, "outstanding": 200000, "unit": "Kills"}, {"key": "quakecraft", "name": "Quakecraft", "normal": 75000, "outstanding": 250000, "unit": "Kills"}, {"key": "uhc", "name": "UHC", "normal": 8, "outstanding": 12, "unit": "\u2605"}, {"key": "speed_uhc", "name": "Speed UHC", "normal": 750, "outstanding": 2000, "unit": "Wins"}, {"key": "the_walls", "name": "The Walls", "normal": 500, "outstanding": 1500, "unit": "Wins"}, {"key": "vampirez", "name": "VampireZ", "normal": 1000, "outstanding": 2500, "unit": "Human Wins"}, {"key": "arcade", "name": "Arcade Games", "normal": 2000, "outstanding": 10000, "unit": "Wins"}, {"key": "tkr", "name": "TKR", "normal": 750, "outstanding": 1500, "unit": "Trophies"}, {"key": "arena_brawl", "name": "Arena Brawl", "normal": 3000, "outstanding": 7000, "unit": "Wins"}, {"key": "warlords", "name": "Warlords", "normal": 500, "outstanding": 2000, "unit": "Wins"}, {"key": "blitz", "name": "Blitz SG", "normal": 2000, "outstanding": 5000, "unit": "Wins"}, {"key": "mega_walls", "name": "Mega Walls", "normal": 500, "outstanding": 2000, "unit": "Wins"}, {"key": "smash_heroes", "name": "Smash Heroes", "normal": 2500, "outstanding": 4000, "unit": "Wins"}, {"key": "build_battle", "name": "Build Battle", "normal": 50000, "outstanding": 125000, "unit": "Score"}, {"key": "the_pit", "name": "The Pit", "normal": 20, "outstanding": 30, "unit": "Prestige"}, {"key": "murder_mystery", "name": "Murder Mystery", "normal": 15000, "outstanding": 30000, "unit": "Wins"}, {"key": "wool_wars", "name": "Wool Wars", "normal": 150, "outstanding": 350, "unit": "\u2605"}];
@@ -436,7 +430,6 @@ function formatStatValue(req, val) {
   return fmtNum(val);
 }
 
-// Live color update
 document.querySelectorAll('input[data-key]').forEach(input => {
   input.addEventListener('input', function() {
     const key = this.dataset.key;
@@ -479,7 +472,6 @@ function submitApplication(e) {
   const karma_link = document.getElementById('karma_link').value.trim();
   const additional_info = document.getElementById('additional_info').value.trim();
 
-  // Collect only stats that meet at least normal requirement
   const metStats = [];
   REQUIREMENTS.forEach(req => {
     const input = document.getElementById('stat-' + req.key);
@@ -516,7 +508,6 @@ function submitApplication(e) {
 
   const subject = 'Blood Lust Guild Application | ' + (ign || 'Unknown');
 
-  // If Formspree isn't configured yet, fall back to mailto
   if (FORMSPREE_URL.includes('YOUR_FORM_ID')) {
     const mailto = 'mailto:bloodguildofficial@gmail.com'
       + '?subject=' + encodeURIComponent(subject)
@@ -524,8 +515,7 @@ function submitApplication(e) {
     window.location.href = mailto;
     return false;
   }
-
-  // Send via Formspree (async, no page reload)
+  
   const submitBtn = document.querySelector('.submit-button');
   submitBtn.disabled = true;
   submitBtn.textContent = 'Sending...';
@@ -566,7 +556,7 @@ function showThankYou() {
     + '<p class="thank-you-warn">If you are <strong>DENIED</strong>, please do <strong>NOT</strong> expect an answer from us. We will not contact you if you are denied.</p>'
     + '<p class="thank-you-closing">Best of luck.</p>'
     + '</div>';
-  // Scroll the thank-you into view
+
   form.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 </script>
