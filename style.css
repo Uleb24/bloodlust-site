@@ -53,6 +53,16 @@ body {
   justify-content: flex-end;
 }
 
+/* When auth-specific items are added, default items go left and auth items go right via spacer */
+.nav-bar .nav-links:has(.nav-auth-spacer) {
+  justify-content: flex-start;
+}
+
+/* Spacer that pushes auth items to the right when logged in */
+.nav-auth-spacer {
+  flex: 1;
+}
+
 .nav-brand {
   font-size: 20px;
   font-weight: bold;
