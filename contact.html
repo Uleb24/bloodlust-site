@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact Us | The Blood Lust</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav-bar">
+  <a href="index.html" class="nav-brand">Blood Lust</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="stats.html">Stats</a></li>
+    <li><a href="members.html">Members</a></li>
+    <li><a href="apply.html">Apply</a></li>
+    <li><a href="contact.html" class="active">Contact Us</a></li>
+  </ul>
+</nav>
+
+<article class="article apply-article">
+  <header class="article-header">
+    <div class="article-eyebrow">Reach Out</div>
+    <h1 class="article-title"><span>Contact Us</span></h1>
+  </header>
+
+  <p class="contact-intro">
+    Are you a member of Hypixel staff, a YouTuber, or just a normal player and you want to get in touch with our staff team? Please send an email below.
+  </p>
+
+  <form class="apply-form" id="contact-form" onsubmit="return sendContact(event)">
+
+    <div class="form-group">
+      <label for="contact_name">Your IGN / Name</label>
+      <input type="text" id="contact_name" name="contact_name" required>
+    </div>
+
+    <div class="form-group">
+      <label for="contact_reason">Your Reason for Contacting</label>
+      <input type="text" id="contact_reason" name="contact_reason" required>
+    </div>
+
+    <div class="form-group">
+      <label for="contact_message">Your Message</label>
+      <textarea id="contact_message" name="contact_message" rows="8" required></textarea>
+    </div>
+
+    <div class="form-submit-area">
+      <button type="submit" class="submit-button">Send</button>
+      <div class="submit-hint">Opens your email client with your message ready to send.</div>
+    </div>
+
+  </form>
+
+</article>
+
+<footer class="site-footer">
+  <div class="footer-brand">The <strong>Blood Lust</strong> Guild</div>
+  <div class="footer-tagline">Hypixel Network</div>
+</footer>
+
+<script>
+function sendContact(e) {
+  e.preventDefault();
+  const name = document.getElementById('contact_name').value.trim();
+  const reason = document.getElementById('contact_reason').value.trim();
+  const message = document.getElementById('contact_message').value.trim();
+
+  const subject = 'Blood Lust Contact | ' + reason + ' (from ' + name + ')';
+  const body = 'From: ' + name + '\n'
+    + 'Reason: ' + reason + '\n\n'
+    + '---\n\n'
+    + message;
+
+  const mailto = 'mailto:bloodguildofficial@gmail.com'
+    + '?subject=' + encodeURIComponent(subject)
+    + '&body=' + encodeURIComponent(body);
+
+  window.location.href = mailto;
+  return false;
+}
+</script>
+
+</body>
+</html>
