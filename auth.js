@@ -23,7 +23,7 @@ async function updateAuthUI() {
     closeAuthMenu();
 
     if (!user) {
-      authIcon.classList.remove('logged-in', 'is-staff', 'has-avatar');
+      authIcon.classList.remove('logged-in', 'is-staff', 'is-member', 'has-avatar');
       authIcon.setAttribute('href', 'login.html');
       authIcon.setAttribute('title', 'Log In / Sign Up');
       authIcon.onclick = null;
@@ -50,7 +50,9 @@ async function updateAuthUI() {
 
     authIcon.classList.add('logged-in');
     const isStaff = profile?.role === 'staff';
+    const isMember = profile?.role === 'member';
     if (isStaff) authIcon.classList.add('is-staff');
+    if (isMember) authIcon.classList.add('is-member');
 
     // Show avatar image if user has one; otherwise keep the SVG silhouette
     if (profile?.avatar_url) {
@@ -73,6 +75,21 @@ async function updateAuthUI() {
       e.stopPropagation();
       toggleAuthMenu();
     };
+
+    const canSeeGuildContent = isStaff || isMember;
+
+    // Add Changelogs link (members + staff only)
+    if (canSeeGuildContent) {
+      const changelogsLi = document.createElement('li');
+      changelogsLi.className = 'nav-auth-item';
+      changelogsLi.innerHTML = '<a href="changelogs.html">Changelogs</a>';
+      navLinks.appendChild(changelogsLi);
+
+      const updatesLi = document.createElement('li');
+      updatesLi.className = 'nav-auth-item';
+      updatesLi.innerHTML = '<a href="guild-updates.html">Guild Updates</a>';
+      navLinks.appendChild(updatesLi);
+    }
 
     // Add Dashboard link
     const dashLi = document.createElement('li');
@@ -174,6 +191,22 @@ async function requireStaff() {
     return null;
   }
   return user;
+}
+
+// Require member OR staff
+async function requireMember() {
+  const user = await requireAuth();
+  if (!user) return null;
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+  if (profile?.role !== 'member' && profile?.role !== 'staff') {
+    window.location.href = 'index.html';
+    return null;
+  }
+  return { user, profile };
 }
 
 // Listen for auth state changes (includes INITIAL_SESSION on page load)
