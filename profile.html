@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -34,55 +35,62 @@
 
   <div id="profile-content" style="display:none;">
 
-    <!-- Avatar section -->
-    <section class="avatar-section">
-      <div class="avatar-preview-wrapper">
-        <div id="avatar-preview" class="avatar-preview">
-          <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-        </div>
-      </div>
-      <div class="avatar-actions">
-        <input type="file" id="avatar-input" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif" style="display:none;">
-        <button type="button" class="avatar-btn" id="avatar-upload-btn">Upload Photo</button>
-        <button type="button" class="avatar-btn avatar-btn-remove" id="avatar-remove-btn" style="display:none;">Remove Photo</button>
-        <div class="avatar-hint">PNG, JPG, WebP, or GIF · Max 2 MB</div>
-        <div id="avatar-msg" class="auth-error" style="display:none; margin-top:12px;"></div>
-      </div>
-    </section>
+```
+<div id="welcome-banner" class="welcome-banner" style="display:none;">
+  <div class="welcome-banner-title">👋 Welcome to The Blood Lust!</div>
+  <div class="welcome-banner-body">Complete your profile below so we know who you are. Add your IGN, Discord, timezone, and optionally a profile picture. You can then head to the <strong>Apply</strong> page to submit your guild application.</div>
+</div>
 
-    <!-- Profile fields -->
-    <form class="apply-form" id="profile-form" onsubmit="return saveProfile(event)">
+<!-- Avatar section -->
+<section class="avatar-section">
+  <div class="avatar-preview-wrapper">
+    <div id="avatar-preview" class="avatar-preview">
+      <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+    </div>
+  </div>
+  <div class="avatar-actions">
+    <input type="file" id="avatar-input" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif" style="display:none;">
+    <button type="button" class="avatar-btn" id="avatar-upload-btn">Upload Photo</button>
+    <button type="button" class="avatar-btn avatar-btn-remove" id="avatar-remove-btn" style="display:none;">Remove Photo</button>
+    <div class="avatar-hint">PNG, JPG, WebP, or GIF · Max 2 MB</div>
+    <div id="avatar-msg" class="auth-error" style="display:none; margin-top:12px;"></div>
+  </div>
+</section>
 
-      <div class="form-group">
-        <label>Email <span class="optional">(read only)</span></label>
-        <input type="email" id="profile-email" disabled>
-      </div>
+<!-- Profile fields -->
+<form class="apply-form" id="profile-form" onsubmit="return saveProfile(event)">
 
-      <div class="form-group">
-        <label for="profile-ign">IGN</label>
-        <input type="text" id="profile-ign" placeholder="Your Minecraft IGN">
-      </div>
+  <div class="form-group">
+    <label>Email <span class="optional">(read only)</span></label>
+    <input type="email" id="profile-email" disabled>
+  </div>
 
-      <div class="form-group">
-        <label for="profile-discord">Discord Username</label>
-        <input type="text" id="profile-discord" placeholder="username or @username">
-      </div>
+  <div class="form-group">
+    <label for="profile-ign">IGN</label>
+    <input type="text" id="profile-ign" placeholder="Your Minecraft IGN">
+  </div>
 
-      <div class="form-group">
-        <label for="profile-timezone">Timezone</label>
-        <input type="text" id="profile-timezone" placeholder="e.g. GMT+1">
-      </div>
+  <div class="form-group">
+    <label for="profile-discord">Discord Username</label>
+    <input type="text" id="profile-discord" placeholder="username or @username">
+  </div>
 
-      <div id="profile-save-msg" class="auth-error" style="display:none;"></div>
+  <div class="form-group">
+    <label for="profile-timezone">Timezone</label>
+    <input type="text" id="profile-timezone" placeholder="e.g. GMT+1">
+  </div>
 
-      <div class="form-submit-area">
-        <button type="submit" class="submit-button">Save Profile</button>
-      </div>
+  <div id="profile-save-msg" class="auth-error" style="display:none;"></div>
 
-    </form>
+  <div class="form-submit-area">
+    <button type="submit" class="submit-button">Save Profile</button>
+  </div>
+
+</form>
+```
 
   </div>
 
@@ -94,8 +102,11 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script src="config.js"></script>
+
 <script src="auth.js"></script>
+
 <script>
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
@@ -148,6 +159,12 @@ async function initProfile() {
     document.getElementById('profile-discord').value = profile.discord || '';
     document.getElementById('profile-timezone').value = profile.timezone || '';
     setAvatarPreview(profile.avatar_url);
+
+    // Show welcome banner if profile is incomplete (no IGN set)
+    if (!profile.ign) {
+      const banner = document.getElementById('welcome-banner');
+      if (banner) banner.style.display = 'block';
+    }
   }
 
   // Wire up avatar buttons
