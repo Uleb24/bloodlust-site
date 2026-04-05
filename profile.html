@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Profile | The Blood Lust</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav-bar">
+  <a href="index.html" class="nav-brand">Blood Lust</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="stats.html">Stats</a></li>
+    <li><a href="members.html">Members</a></li>
+    <li><a href="apply.html">Apply</a></li>
+    <li><a href="contact.html">Contact Us</a></li>
+  </ul>
+  <a id="auth-icon" class="auth-icon" href="login.html" title="Log In">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+      <circle cx="12" cy="7" r="4"></circle>
+    </svg>
+  </a>
+</nav>
+
+<article class="article">
+  <header class="article-header">
+    <div class="article-eyebrow">Account Settings</div>
+    <h1 class="article-title"><span>My Profile</span></h1>
+  </header>
+
+  <div id="profile-content" style="display:none;">
+
+    <!-- Avatar section -->
+    <section class="avatar-section">
+      <div class="avatar-preview-wrapper">
+        <div id="avatar-preview" class="avatar-preview">
+          <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+      </div>
+      <div class="avatar-actions">
+        <input type="file" id="avatar-input" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif" style="display:none;">
+        <button type="button" class="avatar-btn" id="avatar-upload-btn">Upload Photo</button>
+        <button type="button" class="avatar-btn avatar-btn-remove" id="avatar-remove-btn" style="display:none;">Remove Photo</button>
+        <div class="avatar-hint">PNG, JPG, WebP, or GIF · Max 2 MB</div>
+        <div id="avatar-msg" class="auth-error" style="display:none; margin-top:12px;"></div>
+      </div>
+    </section>
+
+    <!-- Profile fields -->
+    <form class="apply-form" id="profile-form" onsubmit="return saveProfile(event)">
+
+      <div class="form-group">
+        <label>Email <span class="optional">(read only)</span></label>
+        <input type="email" id="profile-email" disabled>
+      </div>
+
+      <div class="form-group">
+        <label for="profile-ign">IGN</label>
+        <input type="text" id="profile-ign" placeholder="Your Minecraft IGN">
+      </div>
+
+      <div class="form-group">
+        <label for="profile-discord">Discord Username</label>
+        <input type="text" id="profile-discord" placeholder="username or @username">
+      </div>
+
+      <div class="form-group">
+        <label for="profile-timezone">Timezone</label>
+        <input type="text" id="profile-timezone" placeholder="e.g. GMT+1">
+      </div>
+
+      <div id="profile-save-msg" class="auth-error" style="display:none;"></div>
+
+      <div class="form-submit-area">
+        <button type="submit" class="submit-button">Save Profile</button>
+      </div>
+
+    </form>
+
+  </div>
+
+</article>
+
+<footer class="site-footer">
+  <div class="footer-brand">The <strong>Blood Lust</strong> Guild</div>
+  <div class="footer-tagline">Hypixel Network</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<script>
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
+const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
+
+let currentUserId = null;
+
+function setAvatarPreview(url) {
+  const preview = document.getElementById('avatar-preview');
+  const removeBtn = document.getElementById('avatar-remove-btn');
+  if (url) {
+    preview.innerHTML = `<img src="${url}" alt="avatar">`;
+    preview.classList.add('has-image');
+    removeBtn.style.display = 'inline-block';
+  } else {
+    preview.innerHTML = `<svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+      <circle cx="12" cy="7" r="4"></circle>
+    </svg>`;
+    preview.classList.remove('has-image');
+    removeBtn.style.display = 'none';
+  }
+}
+
+function showAvatarMsg(text, isSuccess = false) {
+  const el = document.getElementById('avatar-msg');
+  el.textContent = text;
+  el.style.display = 'block';
+  el.classList.toggle('success', isSuccess);
+  if (isSuccess) {
+    setTimeout(() => { el.style.display = 'none'; }, 3000);
+  }
+}
+
+async function initProfile() {
+  const user = await requireAuth();
+  if (!user) return;
+  currentUserId = user.id;
+
+  document.getElementById('profile-content').style.display = 'block';
+  document.getElementById('profile-email').value = user.email;
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  if (profile) {
+    document.getElementById('profile-ign').value = profile.ign || '';
+    document.getElementById('profile-discord').value = profile.discord || '';
+    document.getElementById('profile-timezone').value = profile.timezone || '';
+    setAvatarPreview(profile.avatar_url);
+  }
+
+  // Wire up avatar buttons
+  document.getElementById('avatar-upload-btn').addEventListener('click', () => {
+    document.getElementById('avatar-input').click();
+  });
+  document.getElementById('avatar-input').addEventListener('change', handleAvatarUpload);
+  document.getElementById('avatar-remove-btn').addEventListener('click', handleAvatarRemove);
+}
+
+async function handleAvatarUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // Validate
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    showAvatarMsg('Invalid file type. Use PNG, JPG, WebP, or GIF.');
+    e.target.value = '';
+    return;
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    showAvatarMsg('File is too large. Max 2 MB.');
+    e.target.value = '';
+    return;
+  }
+
+  const uploadBtn = document.getElementById('avatar-upload-btn');
+  uploadBtn.disabled = true;
+  uploadBtn.textContent = 'Uploading...';
+
+  // File path: avatars/{user_id}/avatar.{ext}
+  const ext = file.name.split('.').pop().toLowerCase();
+  const filePath = `${currentUserId}/avatar.${ext}`;
+
+  // Upload (upsert so it replaces any existing file)
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(filePath, file, { upsert: true, contentType: file.type });
+
+  if (uploadError) {
+    console.error('Full upload error:', uploadError);
+    let friendlyMsg = uploadError.message;
+    const msg = (uploadError.message || '').toLowerCase();
+    if (msg.includes('row-level security') || msg.includes('violates')) {
+      friendlyMsg = 'Upload permission denied. Please contact support if this keeps happening.';
+    } else if (msg.includes('exceeded') || msg.includes('too large') || msg.includes('payload')) {
+      friendlyMsg = 'File is too large. Max 2 MB.';
+    } else if (msg.includes('mime') || msg.includes('type')) {
+      friendlyMsg = 'This file type is not allowed. Use PNG, JPG, WebP, or GIF.';
+    } else if (msg.includes('network') || msg.includes('fetch')) {
+      friendlyMsg = 'Network error. Please check your connection and try again.';
+    }
+    showAvatarMsg('Upload failed: ' + friendlyMsg);
+    uploadBtn.disabled = false;
+    uploadBtn.textContent = 'Upload Photo';
+    e.target.value = '';
+    return;
+  }
+
+  // Get the public URL
+  const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
+  // Add cache-busting param so the new image shows immediately
+  const publicUrl = urlData.publicUrl + '?t=' + Date.now();
+
+  // Save URL to profile
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ avatar_url: publicUrl })
+    .eq('id', currentUserId);
+
+  if (updateError) {
+    showAvatarMsg('Failed to save: ' + updateError.message);
+    uploadBtn.disabled = false;
+    uploadBtn.textContent = 'Upload Photo';
+    e.target.value = '';
+    return;
+  }
+
+  // Clean up any OTHER extensions for this user (in case they switched formats)
+  const otherExts = ['png', 'jpg', 'jpeg', 'webp', 'gif'].filter(x => x !== ext);
+  for (const otherExt of otherExts) {
+    supabase.storage.from('avatars').remove([`${currentUserId}/avatar.${otherExt}`]).catch(() => {});
+  }
+
+  setAvatarPreview(publicUrl);
+  showAvatarMsg('Photo updated!', true);
+  uploadBtn.disabled = false;
+  uploadBtn.textContent = 'Upload Photo';
+  e.target.value = '';
+
+  // Refresh nav icon
+  if (typeof updateAuthUI === 'function') updateAuthUI();
+}
+
+async function handleAvatarRemove() {
+  if (!confirm('Remove your profile photo?')) return;
+
+  const removeBtn = document.getElementById('avatar-remove-btn');
+  removeBtn.disabled = true;
+  removeBtn.textContent = 'Removing...';
+
+  // Delete all possible extension variations from storage
+  const exts = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
+  const paths = exts.map(x => `${currentUserId}/avatar.${x}`);
+  await supabase.storage.from('avatars').remove(paths);
+
+  // Clear avatar_url on profile
+  const { error } = await supabase
+    .from('profiles')
+    .update({ avatar_url: null })
+    .eq('id', currentUserId);
+
+  if (error) {
+    showAvatarMsg('Failed to remove: ' + error.message);
+    removeBtn.disabled = false;
+    removeBtn.textContent = 'Remove Photo';
+    return;
+  }
+
+  setAvatarPreview(null);
+  showAvatarMsg('Photo removed.', true);
+  removeBtn.disabled = false;
+  removeBtn.textContent = 'Remove Photo';
+
+  // Refresh nav icon
+  if (typeof updateAuthUI === 'function') updateAuthUI();
+}
+
+async function saveProfile(e) {
+  e.preventDefault();
+  const msgEl = document.getElementById('profile-save-msg');
+  msgEl.style.display = 'none';
+  msgEl.classList.remove('success');
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      ign: document.getElementById('profile-ign').value.trim() || null,
+      discord: document.getElementById('profile-discord').value.trim() || null,
+      timezone: document.getElementById('profile-timezone').value.trim() || null,
+    })
+    .eq('id', user.id);
+
+  if (error) {
+    msgEl.textContent = 'Error: ' + error.message;
+    msgEl.style.display = 'block';
+  } else {
+    msgEl.textContent = 'Profile saved!';
+    msgEl.classList.add('success');
+    msgEl.style.display = 'block';
+    setTimeout(() => { msgEl.style.display = 'none'; }, 3000);
+  }
+  return false;
+}
+
+initProfile();
+</script>
+
+</body>
+</html>

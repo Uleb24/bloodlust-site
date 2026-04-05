@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin | The Blood Lust</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav-bar">
+  <a href="index.html" class="nav-brand">Blood Lust</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="stats.html">Stats</a></li>
+    <li><a href="members.html">Members</a></li>
+    <li><a href="apply.html">Apply</a></li>
+    <li><a href="contact.html">Contact Us</a></li>
+  </ul>
+  <a id="auth-icon" class="auth-icon" href="login.html" title="Log In">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+      <circle cx="12" cy="7" r="4"></circle>
+    </svg>
+  </a>
+</nav>
+
+<article class="article">
+  <header class="article-header">
+    <div class="article-eyebrow">Staff Only</div>
+    <h1 class="article-title"><span>Admin</span></h1>
+  </header>
+
+  <div id="admin-content" style="display:none;">
+
+    <div class="admin-controls">
+      <div class="admin-filters" id="admin-filters">
+        <button class="admin-filter active" data-filter="all">All <span class="admin-filter-count" id="count-all">0</span></button>
+        <button class="admin-filter" data-filter="pending">Pending <span class="admin-filter-count" id="count-pending">0</span></button>
+        <button class="admin-filter" data-filter="accepted">Accepted <span class="admin-filter-count" id="count-accepted">0</span></button>
+        <button class="admin-filter" data-filter="denied">Denied <span class="admin-filter-count" id="count-denied">0</span></button>
+      </div>
+      <input type="text" id="admin-search" class="admin-search" placeholder="Search by IGN or Discord...">
+    </div>
+
+    <div id="admin-apps-container"></div>
+
+    <section class="admin-user-mgmt">
+      <h2 class="section-heading">User Management</h2>
+      <p style="color:#8b7c6f; font-style:italic; margin-bottom:20px;">Promote trusted members to staff, or demote existing staff back to players. You cannot change your own role.</p>
+      <input type="text" id="user-search" class="admin-search" placeholder="Search users by IGN or email..." style="margin-bottom:20px; max-width:100%;">
+      <div id="user-list-container"></div>
+    </section>
+
+  </div>
+
+  <div id="admin-loading" style="color:#8b7c6f; font-style:italic; padding:40px 0;">Loading applications...</div>
+
+</article>
+
+<footer class="site-footer">
+  <div class="footer-brand">The <strong>Blood Lust</strong> Guild</div>
+  <div class="footer-tagline">Hypixel Network</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<script>
+// Requirements data for color coding stats
+const REQUIREMENTS = [
+  {key:'achievement_points', name:'Achievement Points', normal:17000, outstanding:23000, unit:''},
+  {key:'quests', name:'Quests', normal:10000, outstanding:20000, unit:''},
+  {key:'bedwars', name:'BedWars', normal:800, outstanding:1500, unit:'★'},
+  {key:'skywars', name:'Skywars', normal:60, outstanding:100, unit:'★'},
+  {key:'duels', name:'Duels', normal:25000, outstanding:80000, unit:'Wins'},
+  {key:'tnt_run', name:'TNT Run', normal:1000, outstanding:10000, unit:'Wins'},
+  {key:'pvp_run', name:'PVP Run', normal:1000, outstanding:4000, unit:'Wins'},
+  {key:'tnt_tag', name:'TNT Tag', normal:750, outstanding:5000, unit:'Wins'},
+  {key:'bow_spleef', name:'Bow Spleef', normal:1000, outstanding:5000, unit:'Wins'},
+  {key:'wizards', name:'Wizards', normal:1000, outstanding:5000, unit:'Wins'},
+  {key:'cvc_defusal', name:'CvC Defusal', normal:10000, outstanding:35000, unit:'Kills'},
+  {key:'cvc_tdm', name:'CvC TDM', normal:25000, outstanding:60000, unit:'Kills'},
+  {key:'paintball', name:'Paintball', normal:50000, outstanding:200000, unit:'Kills'},
+  {key:'quakecraft', name:'Quakecraft', normal:75000, outstanding:250000, unit:'Kills'},
+  {key:'uhc', name:'UHC', normal:8, outstanding:12, unit:'★'},
+  {key:'speed_uhc', name:'Speed UHC', normal:750, outstanding:2000, unit:'Wins'},
+  {key:'the_walls', name:'The Walls', normal:500, outstanding:1500, unit:'Wins'},
+  {key:'vampirez', name:'VampireZ', normal:1000, outstanding:2500, unit:'Human Wins'},
+  {key:'arcade', name:'Arcade Games', normal:2000, outstanding:10000, unit:'Wins'},
+  {key:'tkr', name:'TKR', normal:750, outstanding:1500, unit:'Trophies'},
+  {key:'arena_brawl', name:'Arena Brawl', normal:3000, outstanding:7000, unit:'Wins'},
+  {key:'warlords', name:'Warlords', normal:500, outstanding:2000, unit:'Wins'},
+  {key:'blitz', name:'Blitz SG', normal:2000, outstanding:5000, unit:'Wins'},
+  {key:'mega_walls', name:'Mega Walls', normal:500, outstanding:2000, unit:'Wins'},
+  {key:'smash_heroes', name:'Smash Heroes', normal:2500, outstanding:4000, unit:'Wins'},
+  {key:'build_battle', name:'Build Battle', normal:50000, outstanding:125000, unit:'Score'},
+  {key:'the_pit', name:'The Pit', normal:20, outstanding:30, unit:'Prestige'},
+  {key:'murder_mystery', name:'Murder Mystery', normal:15000, outstanding:30000, unit:'Wins'},
+  {key:'wool_wars', name:'Wool Wars', normal:150, outstanding:350, unit:'★'},
+];
+const REQS_BY_KEY = Object.fromEntries(REQUIREMENTS.map(r => [r.key, r]));
+
+let allApps = [];
+let currentFilter = 'all';
+let searchQuery = '';
+
+function fmtNum(n) { return Number(n).toLocaleString('en-US'); }
+function formatStatValue(req, val) {
+  if (req.unit === '★') return fmtNum(val) + '★';
+  if (req.unit) return fmtNum(val) + ' ' + req.unit;
+  return fmtNum(val);
+}
+
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    + ' at '
+    + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
+function statusBadge(status) {
+  const s = (status || 'pending').toLowerCase();
+  const label = s.charAt(0).toUpperCase() + s.slice(1);
+  return `<span class="status-badge status-${s}">${label}</span>`;
+}
+
+function renderStats(stats) {
+  if (!stats || Object.keys(stats).length === 0) return '<em style="color:#6b5d53;">No stats provided</em>';
+  return Object.keys(stats).map(k => {
+    const val = Number(stats[k]);
+    const req = REQS_BY_KEY[k];
+    let cls = '';
+    let label = '';
+    if (req) {
+      if (val >= req.outstanding) {
+        cls = 'stat-outstanding';
+        label = '<span class="stat-badge stat-badge-outstanding">Outstanding!</span>';
+      } else if (val >= req.normal) {
+        cls = 'stat-met';
+        label = '<span class="stat-badge stat-badge-met">Normal</span>';
+      } else {
+        cls = 'stat-below';
+        label = '<span class="stat-badge stat-badge-below">Below</span>';
+      }
+    }
+    const name = req ? req.name : k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const displayVal = req ? formatStatValue(req, val) : fmtNum(val);
+    return `<div class="app-stat-item ${cls}">
+      <div class="app-stat-row">
+        <span class="app-stat-name">${escapeHtml(name)}</span>
+        <span class="app-stat-val">${escapeHtml(displayVal)}</span>
+      </div>
+      ${label}
+    </div>`;
+  }).join('');
+}
+
+function renderAdminCard(app) {
+  const noteValue = app.staff_notes || '';
+  return `
+    <div class="app-card admin-app-card" data-id="${app.id}" data-status="${app.status}">
+      <div class="app-card-header">
+        <div class="app-card-meta">
+          <div class="app-card-ign">${escapeHtml(app.ign)}</div>
+          <div class="app-card-date">Submitted ${fmtDate(app.created_at)}</div>
+        </div>
+        ${statusBadge(app.status)}
+      </div>
+
+      <div class="app-card-body" style="padding-top:0;">
+        <div class="app-card-field"><div class="app-card-label">Discord</div>${escapeHtml(app.discord)}</div>
+        <div class="app-card-field"><div class="app-card-label">Timezone</div>${escapeHtml(app.timezone)}</div>
+        ${app.previous_guilds ? `<div class="app-card-field"><div class="app-card-label">Previous Guilds</div>${escapeHtml(app.previous_guilds)}</div>` : ''}
+        ${app.main_gamemodes ? `<div class="app-card-field"><div class="app-card-label">Main Gamemodes</div>${escapeHtml(app.main_gamemodes)}</div>` : ''}
+        ${app.karma_link ? `<div class="app-card-field"><div class="app-card-label">25karma</div><a href="${escapeHtml(app.karma_link)}" target="_blank" rel="noopener">${escapeHtml(app.karma_link)}</a></div>` : ''}
+        ${app.additional_info ? `<div class="app-card-field"><div class="app-card-label">Additional Info</div>${escapeHtml(app.additional_info)}</div>` : ''}
+        <div class="app-card-field"><div class="app-card-label">Stats Submitted</div><div class="app-stats-list">${renderStats(app.stats)}</div></div>
+      </div>
+
+      <div class="admin-review-section">
+        <label class="admin-review-label" for="notes-${app.id}">Review Notes <span style="color:#6b5d53; font-weight:normal; letter-spacing:0.5px; text-transform:none;">(optional, visible to applicant)</span></label>
+        <textarea id="notes-${app.id}" class="admin-review-notes" rows="2" placeholder="Write a message for the applicant...">${escapeHtml(noteValue)}</textarea>
+        <div class="admin-actions">
+          <button class="admin-btn admin-btn-accept" data-action="accept" data-id="${app.id}">✓ Accept</button>
+          <button class="admin-btn admin-btn-deny" data-action="deny" data-id="${app.id}">✕ Deny</button>
+          <button class="admin-btn admin-btn-pending" data-action="pending" data-id="${app.id}">↺ Reset to Pending</button>
+          <button class="admin-btn admin-btn-delete" data-action="delete" data-id="${app.id}">🗑 Hide</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function filterAndRender() {
+  const container = document.getElementById('admin-apps-container');
+  let filtered = allApps;
+
+  // Status filter
+  if (currentFilter !== 'all') {
+    filtered = filtered.filter(a => a.status === currentFilter);
+  }
+
+  // Search filter
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter(a =>
+      (a.ign || '').toLowerCase().includes(q) ||
+      (a.discord || '').toLowerCase().includes(q)
+    );
+  }
+
+  if (filtered.length === 0) {
+    const msg = searchQuery
+      ? 'No applications match your search.'
+      : currentFilter === 'all'
+        ? 'No applications yet.'
+        : `No ${currentFilter} applications.`;
+    container.innerHTML = `<div class="app-empty"><div class="app-empty-icon">◆</div><h2>${msg}</h2></div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(renderAdminCard).join('');
+  attachActionHandlers();
+}
+
+function updateCounts() {
+  document.getElementById('count-all').textContent = allApps.length;
+  document.getElementById('count-pending').textContent = allApps.filter(a => a.status === 'pending').length;
+  document.getElementById('count-accepted').textContent = allApps.filter(a => a.status === 'accepted').length;
+  document.getElementById('count-denied').textContent = allApps.filter(a => a.status === 'denied').length;
+}
+
+function attachActionHandlers() {
+  document.querySelectorAll('.admin-btn').forEach(btn => {
+    btn.addEventListener('click', handleAdminAction);
+  });
+}
+
+async function handleAdminAction(e) {
+  const btn = e.currentTarget;
+  const action = btn.dataset.action;
+  const id = btn.dataset.id;
+  const notesEl = document.getElementById('notes-' + id);
+  const notes = notesEl ? notesEl.value.trim() : '';
+
+  if (action === 'delete') {
+    if (!confirm('Are you sure you want to hide this application from the admin dashboard? The applicant will still see it on their dashboard (marked as removed by staff).')) {
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Hiding...';
+    const { error } = await supabase
+      .from('applications')
+      .update({ staff_deleted: true })
+      .eq('id', id);
+    if (error) {
+      alert('Failed to hide application: ' + error.message);
+      btn.disabled = false;
+      btn.textContent = '🗑 Delete';
+      return;
+    }
+    allApps = allApps.filter(a => a.id !== id);
+    updateCounts();
+    filterAndRender();
+    return;
+  }
+
+  // Accept / Deny / Pending: update status + notes
+  const { data: { user } } = await supabase.auth.getUser();
+  const newStatus = action === 'pending' ? 'pending' : (action === 'accept' ? 'accepted' : 'denied');
+  const updateData = {
+    status: newStatus,
+    staff_notes: notes || null,
+    reviewed_by: newStatus === 'pending' ? null : user.id,
+    reviewed_at: newStatus === 'pending' ? null : new Date().toISOString(),
+  };
+
+  btn.disabled = true;
+  const { data, error } = await supabase
+    .from('applications')
+    .update(updateData)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    alert('Update failed: ' + error.message);
+    btn.disabled = false;
+    return;
+  }
+
+  // Update local copy
+  const idx = allApps.findIndex(a => a.id === id);
+  if (idx >= 0) allApps[idx] = data;
+  updateCounts();
+  filterAndRender();
+}
+
+let allUsers = [];
+let userSearchQuery = '';
+let currentStaffUserId = null;
+
+function renderUser(u) {
+  const isSelf = u.id === currentStaffUserId;
+  const isStaff = u.role === 'staff';
+  const displayIgn = u.ign || '(no IGN set)';
+  const discord = u.discord ? escapeHtml(u.discord) : '<em style="color:#6b5d53;">no discord</em>';
+  const joined = u.created_at ? fmtDate(u.created_at) : '';
+
+  return `
+    <div class="user-row ${isStaff ? 'user-row-staff' : ''}">
+      <div class="user-info">
+        <div class="user-name">${escapeHtml(displayIgn)} ${isStaff ? '<span class="user-role-tag">Staff</span>' : ''}</div>
+        <div class="user-meta">${discord} &middot; Joined ${joined}</div>
+      </div>
+      ${isSelf
+        ? '<span class="user-self-note">(you)</span>'
+        : isStaff
+          ? `<button class="admin-btn admin-btn-demote" data-action="demote" data-id="${u.id}" data-name="${escapeHtml(displayIgn)}">Demote to Player</button>`
+          : `<button class="admin-btn admin-btn-promote" data-action="promote" data-id="${u.id}" data-name="${escapeHtml(displayIgn)}">Promote to Staff</button>`
+      }
+    </div>
+  `;
+}
+
+function renderUserList() {
+  const container = document.getElementById('user-list-container');
+  let filtered = allUsers;
+  if (userSearchQuery) {
+    const q = userSearchQuery.toLowerCase();
+    filtered = filtered.filter(u =>
+      (u.ign || '').toLowerCase().includes(q) ||
+      (u.discord || '').toLowerCase().includes(q)
+    );
+  }
+  if (filtered.length === 0) {
+    container.innerHTML = '<div style="color:#6b5d53; font-style:italic; padding:12px 0;">No users match.</div>';
+    return;
+  }
+  // Show staff first, then players
+  filtered.sort((a, b) => {
+    if (a.role !== b.role) return a.role === 'staff' ? -1 : 1;
+    return (a.ign || '').localeCompare(b.ign || '');
+  });
+  container.innerHTML = filtered.map(renderUser).join('');
+  attachUserActionHandlers();
+}
+
+function attachUserActionHandlers() {
+  document.querySelectorAll('.admin-btn-promote, .admin-btn-demote').forEach(btn => {
+    btn.addEventListener('click', handleRoleChange);
+  });
+}
+
+async function handleRoleChange(e) {
+  const btn = e.currentTarget;
+  const action = btn.dataset.action;
+  const id = btn.dataset.id;
+  const name = btn.dataset.name;
+
+  let confirmMsg;
+  if (action === 'promote') {
+    confirmMsg = `Are you sure you want to promote ${name} to staff?\n\nThey will have full access to:\n- Accept, deny, and hide applications\n- Promote and demote other users\n- View all user data\n\nOnly promote people you trust.`;
+  } else {
+    confirmMsg = `Are you sure you want to demote ${name} back to player?\n\nThey will lose all staff permissions immediately.`;
+  }
+
+  if (!confirm(confirmMsg)) return;
+
+  const newRole = action === 'promote' ? 'staff' : 'player';
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ role: newRole })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    alert('Role change failed: ' + error.message);
+    btn.disabled = false;
+    btn.textContent = action === 'promote' ? 'Promote to Staff' : 'Demote to Player';
+    return;
+  }
+
+  // Update local copy
+  const idx = allUsers.findIndex(u => u.id === id);
+  if (idx >= 0) allUsers[idx] = data;
+  renderUserList();
+}
+
+async function loadUsers() {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) {
+    document.getElementById('user-list-container').innerHTML =
+      '<div class="auth-error">Failed to load users: ' + escapeHtml(error.message) + '</div>';
+    return;
+  }
+  allUsers = data || [];
+  renderUserList();
+}
+
+async function initAdmin() {
+  const user = await requireStaff();
+  if (!user) return;
+  currentStaffUserId = user.id;
+
+  const { data, error } = await supabase
+    .from('applications')
+    .select('*')
+    .eq('staff_deleted', false)
+    .order('created_at', { ascending: false });
+
+  document.getElementById('admin-loading').style.display = 'none';
+  document.getElementById('admin-content').style.display = 'block';
+
+  if (error) {
+    document.getElementById('admin-apps-container').innerHTML =
+      '<div class="auth-error">Failed to load applications: ' + escapeHtml(error.message) + '</div>';
+  } else {
+    allApps = data || [];
+    updateCounts();
+    filterAndRender();
+  }
+
+  // Filter tabs
+  document.querySelectorAll('.admin-filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.admin-filter').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      filterAndRender();
+    });
+  });
+
+  // Search
+  document.getElementById('admin-search').addEventListener('input', (e) => {
+    searchQuery = e.target.value.trim();
+    filterAndRender();
+  });
+
+  // User management
+  await loadUsers();
+  document.getElementById('user-search').addEventListener('input', (e) => {
+    userSearchQuery = e.target.value.trim();
+    renderUserList();
+  });
+}
+
+initAdmin();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard | The Blood Lust</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav-bar">
+  <a href="index.html" class="nav-brand">Blood Lust</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="stats.html">Stats</a></li>
+    <li><a href="members.html">Members</a></li>
+    <li><a href="apply.html">Apply</a></li>
+    <li><a href="contact.html">Contact Us</a></li>
+  </ul>
+  <a id="auth-icon" class="auth-icon" href="login.html" title="Log In">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+      <circle cx="12" cy="7" r="4"></circle>
+    </svg>
+  </a>
+</nav>
+
+<article class="article">
+  <header class="article-header">
+    <div class="article-eyebrow">Application Status</div>
+    <h1 class="article-title"><span>Dashboard</span></h1>
+  </header>
+
+  <div id="dashboard-content" style="display:none;">
+    <div id="applications-container"></div>
+  </div>
+
+  <div id="dashboard-loading" style="color:#8b7c6f; font-style:italic; padding:40px 0;">Loading your applications...</div>
+
+</article>
+
+<footer class="site-footer">
+  <div class="footer-brand">The <strong>Blood Lust</strong> Guild</div>
+  <div class="footer-tagline">Hypixel Network</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<script>
+// Requirements data (same as apply.html) - used to color-code stats
+const REQUIREMENTS = [
+  {key:'achievement_points', name:'Achievement Points', normal:17000, outstanding:23000, unit:''},
+  {key:'quests', name:'Quests', normal:10000, outstanding:20000, unit:''},
+  {key:'bedwars', name:'BedWars', normal:800, outstanding:1500, unit:'★'},
+  {key:'skywars', name:'Skywars', normal:60, outstanding:100, unit:'★'},
+  {key:'duels', name:'Duels', normal:25000, outstanding:80000, unit:'Wins'},
+  {key:'tnt_run', name:'TNT Run', normal:1000, outstanding:10000, unit:'Wins'},
+  {key:'pvp_run', name:'PVP Run', normal:1000, outstanding:4000, unit:'Wins'},
+  {key:'tnt_tag', name:'TNT Tag', normal:750, outstanding:5000, unit:'Wins'},
+  {key:'bow_spleef', name:'Bow Spleef', normal:1000, outstanding:5000, unit:'Wins'},
+  {key:'wizards', name:'Wizards', normal:1000, outstanding:5000, unit:'Wins'},
+  {key:'cvc_defusal', name:'CvC Defusal', normal:10000, outstanding:35000, unit:'Kills'},
+  {key:'cvc_tdm', name:'CvC TDM', normal:25000, outstanding:60000, unit:'Kills'},
+  {key:'paintball', name:'Paintball', normal:50000, outstanding:200000, unit:'Kills'},
+  {key:'quakecraft', name:'Quakecraft', normal:75000, outstanding:250000, unit:'Kills'},
+  {key:'uhc', name:'UHC', normal:8, outstanding:12, unit:'★'},
+  {key:'speed_uhc', name:'Speed UHC', normal:750, outstanding:2000, unit:'Wins'},
+  {key:'the_walls', name:'The Walls', normal:500, outstanding:1500, unit:'Wins'},
+  {key:'vampirez', name:'VampireZ', normal:1000, outstanding:2500, unit:'Human Wins'},
+  {key:'arcade', name:'Arcade Games', normal:2000, outstanding:10000, unit:'Wins'},
+  {key:'tkr', name:'TKR', normal:750, outstanding:1500, unit:'Trophies'},
+  {key:'arena_brawl', name:'Arena Brawl', normal:3000, outstanding:7000, unit:'Wins'},
+  {key:'warlords', name:'Warlords', normal:500, outstanding:2000, unit:'Wins'},
+  {key:'blitz', name:'Blitz SG', normal:2000, outstanding:5000, unit:'Wins'},
+  {key:'mega_walls', name:'Mega Walls', normal:500, outstanding:2000, unit:'Wins'},
+  {key:'smash_heroes', name:'Smash Heroes', normal:2500, outstanding:4000, unit:'Wins'},
+  {key:'build_battle', name:'Build Battle', normal:50000, outstanding:125000, unit:'Score'},
+  {key:'the_pit', name:'The Pit', normal:20, outstanding:30, unit:'Prestige'},
+  {key:'murder_mystery', name:'Murder Mystery', normal:15000, outstanding:30000, unit:'Wins'},
+  {key:'wool_wars', name:'Wool Wars', normal:150, outstanding:350, unit:'★'},
+];
+const REQS_BY_KEY = Object.fromEntries(REQUIREMENTS.map(r => [r.key, r]));
+
+function fmtNum(n) { return Number(n).toLocaleString('en-US'); }
+function formatStatValue(req, val) {
+  if (req.unit === '★') return fmtNum(val) + '★';
+  if (req.unit) return fmtNum(val) + ' ' + req.unit;
+  return fmtNum(val);
+}
+
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    + ' at '
+    + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
+function statusBadge(status) {
+  const s = (status || 'pending').toLowerCase();
+  const label = s.charAt(0).toUpperCase() + s.slice(1);
+  return `<span class="status-badge status-${s}">${label}</span>`;
+}
+
+function renderStats(stats) {
+  if (!stats || Object.keys(stats).length === 0) return '<em style="color:#6b5d53;">No stats provided</em>';
+  return Object.keys(stats).map(k => {
+    const val = Number(stats[k]);
+    const req = REQS_BY_KEY[k];
+    let cls = '';
+    let label = '';
+    if (req) {
+      if (val >= req.outstanding) {
+        cls = 'stat-outstanding';
+        label = '<span class="stat-badge stat-badge-outstanding">Outstanding!</span>';
+      } else if (val >= req.normal) {
+        cls = 'stat-met';
+        label = '<span class="stat-badge stat-badge-met">Normal</span>';
+      } else {
+        cls = 'stat-below';
+        label = '<span class="stat-badge stat-badge-below">Below</span>';
+      }
+    }
+    const name = req ? req.name : k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const displayVal = req ? formatStatValue(req, val) : fmtNum(val);
+    return `<div class="app-stat-item ${cls}">
+      <div class="app-stat-row">
+        <span class="app-stat-name">${escapeHtml(name)}</span>
+        <span class="app-stat-val">${escapeHtml(displayVal)}</span>
+      </div>
+      ${label}
+    </div>`;
+  }).join('');
+}
+
+function renderApplication(app) {
+  const removedBadge = app.staff_deleted
+    ? '<div class="app-removed-banner">This application was removed from active review by staff.</div>'
+    : '';
+  return `
+    <div class="app-card ${app.staff_deleted ? 'app-card-removed' : ''}">
+      <div class="app-card-header">
+        <div class="app-card-meta">
+          <div class="app-card-ign">${escapeHtml(app.ign)}</div>
+          <div class="app-card-date">Submitted ${fmtDate(app.created_at)}</div>
+        </div>
+        ${statusBadge(app.status)}
+      </div>
+
+      ${removedBadge}
+
+      ${app.status === 'denied' && app.staff_notes ? `
+        <div class="app-card-notes app-card-notes-denied">
+          <div class="app-card-notes-label">Reason:</div>
+          ${escapeHtml(app.staff_notes)}
+        </div>` : ''}
+      ${app.status === 'accepted' && app.staff_notes ? `
+        <div class="app-card-notes app-card-notes-accepted">
+          <div class="app-card-notes-label">Note from Staff:</div>
+          ${escapeHtml(app.staff_notes)}
+        </div>` : ''}
+
+      <details class="app-card-details">
+        <summary>View Submitted Info</summary>
+        <div class="app-card-body">
+          <div class="app-card-field"><div class="app-card-label">Discord</div>${escapeHtml(app.discord)}</div>
+          <div class="app-card-field"><div class="app-card-label">Timezone</div>${escapeHtml(app.timezone)}</div>
+          ${app.previous_guilds ? `<div class="app-card-field"><div class="app-card-label">Previous Guilds</div>${escapeHtml(app.previous_guilds)}</div>` : ''}
+          ${app.main_gamemodes ? `<div class="app-card-field"><div class="app-card-label">Main Gamemodes</div>${escapeHtml(app.main_gamemodes)}</div>` : ''}
+          ${app.karma_link ? `<div class="app-card-field"><div class="app-card-label">25karma</div><a href="${escapeHtml(app.karma_link)}" target="_blank" rel="noopener">${escapeHtml(app.karma_link)}</a></div>` : ''}
+          ${app.additional_info ? `<div class="app-card-field"><div class="app-card-label">Additional Info</div>${escapeHtml(app.additional_info)}</div>` : ''}
+          <div class="app-card-field"><div class="app-card-label">Stats Submitted</div><div class="app-stats-list">${renderStats(app.stats)}</div></div>
+        </div>
+      </details>
+    </div>
+  `;
+}
+
+function renderEmpty() {
+  return `
+    <div class="app-empty">
+      <div class="app-empty-icon">◆</div>
+      <h2>No Applications Yet</h2>
+      <p>You haven't submitted an application to The Blood Lust. Ready to join?</p>
+      <a href="apply.html" class="submit-button" style="display:inline-block; margin-top:20px; text-decoration:none;">Apply Now</a>
+    </div>
+  `;
+}
+
+async function initDashboard() {
+  const user = await requireAuth();
+  if (!user) return;
+
+  const { data: apps, error } = await supabase
+    .from('applications')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+
+  document.getElementById('dashboard-loading').style.display = 'none';
+  document.getElementById('dashboard-content').style.display = 'block';
+  const container = document.getElementById('applications-container');
+
+  if (error) {
+    container.innerHTML = '<div class="auth-error">Failed to load applications: ' + escapeHtml(error.message) + '</div>';
+    return;
+  }
+
+  if (!apps || apps.length === 0) {
+    container.innerHTML = renderEmpty();
+    return;
+  }
+
+  container.innerHTML = apps.map(renderApplication).join('');
+}
+
+initDashboard();
+</script>
+
+</body>
+</html>
