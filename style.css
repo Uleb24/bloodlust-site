@@ -20,6 +20,12 @@ body > * {
   width: 100%;
 }
 
+/* Exceptions: absolutely-positioned floating elements shouldn't stretch */
+body > #auth-menu,
+body > .modal-overlay {
+  width: auto;
+}
+
 .site-footer {
   margin-top: auto;
 }
