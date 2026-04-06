@@ -115,6 +115,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="auth.js"></script>
+<script src="presence.js"></script>
 <script>
 // Requirements data for color coding stats
 const REQUIREMENTS = [
@@ -476,9 +477,12 @@ function renderUserList() {
     container.innerHTML = '<div style="color:#6b5d53; font-style:italic; padding:12px 0;">No users match.</div>';
     return;
   }
-  // Show staff first, then members, then players
+  // Owner first, then staff, then members, then players (alpha within each)
+  const OWNER_ID = '6c7d5f18-025e-4b8f-b2e9-a639a02ab624';
   const roleOrder = { staff: 0, member: 1, player: 2 };
   filtered.sort((a, b) => {
+    if (a.id === OWNER_ID) return -1;
+    if (b.id === OWNER_ID) return 1;
     const ao = roleOrder[a.role] ?? 3;
     const bo = roleOrder[b.role] ?? 3;
     if (ao !== bo) return ao - bo;
