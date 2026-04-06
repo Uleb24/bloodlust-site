@@ -3,11 +3,33 @@
 // ============================================
 // - TRACKS presence for any logged-in user on any page
 // - RENDERS the sidebar only on certain pages for members/staff
+// - Exposes window.BloodLustPresence with { getOnlineIds(), onChange(cb) }
+//   so other pages (users directory, profile view) can read presence
+//   without creating their own channel (which causes race conditions).
 
 const OWNER_UUID = '6c7d5f18-025e-4b8f-b2e9-a639a02ab624';
 
 // Pages where the sidebar should be rendered (for members/staff)
 const PRESENCE_PAGES = ['dashboard.html', 'changelogs.html', 'guild-updates.html', 'admin.html'];
+
+// Global accessor so other page scripts can read who's online without
+// opening their own channel (which causes flicker).
+window.BloodLustPresence = (function() {
+  const listeners = [];
+  let onlineIds = new Set();
+  return {
+    getOnlineIds() { return onlineIds; },
+    _setOnlineIds(ids) {
+      onlineIds = new Set(ids);
+      listeners.forEach(fn => { try { fn(onlineIds); } catch(e) { console.warn(e); } });
+    },
+    onChange(fn) {
+      listeners.push(fn);
+      // Fire immediately with current state
+      try { fn(onlineIds); } catch(e) { console.warn(e); }
+    }
+  };
+})();
 
 (function() {
   let presenceChannel = null;
@@ -47,13 +69,13 @@ const PRESENCE_PAGES = ['dashboard.html', 'changelogs.html', 'guild-updates.html
 
     presenceChannel
       .on('presence', { event: 'sync' }, async () => {
-        if (shouldRenderSidebar) await handlePresenceSync();
+        await handlePresenceSync();
       })
       .on('presence', { event: 'join' }, async () => {
-        if (shouldRenderSidebar) await handlePresenceSync();
+        await handlePresenceSync();
       })
       .on('presence', { event: 'leave' }, async () => {
-        if (shouldRenderSidebar) await handlePresenceSync();
+        await handlePresenceSync();
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
@@ -70,6 +92,9 @@ const PRESENCE_PAGES = ['dashboard.html', 'changelogs.html', 'guild-updates.html
     if (!presenceChannel) return;
     const state = presenceChannel.presenceState();
     const onlineUserIds = Object.keys(state);
+
+    // Always update the global accessor so other scripts see fresh data
+    window.BloodLustPresence._setOnlineIds(onlineUserIds);
 
     const missingIds = onlineUserIds.filter(id => !profileCache[id]);
     if (missingIds.length > 0) {
@@ -133,6 +158,7 @@ const PRESENCE_PAGES = ['dashboard.html', 'changelogs.html', 'guild-updates.html
   function renderSidebar(onlineUserIds) {
     const listEl = document.getElementById('presence-panel-list');
     const countEl = document.getElementById('presence-count');
+    // If the sidebar isn't rendered on this page, nothing to do
     if (!listEl || !countEl) return;
 
     // Show ALL online users regardless of role

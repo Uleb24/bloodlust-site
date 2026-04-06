@@ -276,23 +276,25 @@ function renderProfile(p) {
   }
 }
 
-// Check presence via Realtime
-async function checkPresence(targetUserId) {
-  try {
-    const channel = supabase.channel('online-users');
-    channel.on('presence', { event: 'sync' }, () => {
-      const state = channel.presenceState();
-      const isOnline = Object.keys(state).includes(targetUserId);
-      const dotEl = document.getElementById('pub-presence-dot');
-      dotEl.classList.remove('pub-hero-dot-online', 'pub-hero-dot-offline');
-      dotEl.classList.add(isOnline ? 'pub-hero-dot-online' : 'pub-hero-dot-offline');
-      dotEl.title = isOnline ? 'Online now' : 'Offline';
-    }).subscribe();
+// Check presence via the shared BloodLustPresence state (avoids opening
+// a separate channel which would flicker due to race conditions).
+function checkPresence(targetUserId) {
+  const dotEl = document.getElementById('pub-presence-dot');
+  if (!dotEl) return;
 
-    setTimeout(() => { supabase.removeChannel(channel); }, 6000);
-  } catch (e) {
-    console.warn('Presence check failed:', e);
-    document.getElementById('pub-presence-dot').classList.add('pub-hero-dot-offline');
+  const updateDot = (ids) => {
+    const isOnline = ids && ids.has(targetUserId);
+    dotEl.classList.remove('pub-hero-dot-online', 'pub-hero-dot-offline');
+    dotEl.classList.add(isOnline ? 'pub-hero-dot-online' : 'pub-hero-dot-offline');
+    dotEl.title = isOnline ? 'Online now' : 'Offline';
+  };
+
+  if (window.BloodLustPresence) {
+    // Live-update as presence state changes
+    window.BloodLustPresence.onChange(updateDot);
+  } else {
+    // Not logged in — BloodLustPresence wasn't initialized. Mark as offline.
+    updateDot(new Set());
   }
 }
 

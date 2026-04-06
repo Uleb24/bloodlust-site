@@ -64,7 +64,6 @@ let allUsers = [];
 let onlineIds = new Set();
 let currentFilter = 'all';
 let searchQ = '';
-let directoryChannel = null;
 
 function flagEmoji(code) {
   if (!code || code.length !== 2) return '';
@@ -183,21 +182,17 @@ async function loadUsers() {
   renderGrid();
 }
 
-// Join presence channel (read-only) to know who's online
-function initDirectoryPresence() {
-  directoryChannel = supabase.channel('online-users');
-  directoryChannel
-    .on('presence', { event: 'sync' }, () => {
-      const state = directoryChannel.presenceState();
-      onlineIds = new Set(Object.keys(state));
-      renderGrid();
-    })
-    .subscribe();
-}
-
 async function init() {
   await loadUsers();
-  initDirectoryPresence();
+
+  // Use the shared presence state from presence.js instead of opening
+  // our own channel (which causes flicker / race conditions).
+  if (window.BloodLustPresence) {
+    window.BloodLustPresence.onChange((ids) => {
+      onlineIds = new Set(ids);
+      renderGrid();
+    });
+  }
 
   document.getElementById('users-search').addEventListener('input', (e) => {
     searchQ = e.target.value.trim();
@@ -215,10 +210,6 @@ async function init() {
 }
 
 init();
-
-window.addEventListener('beforeunload', () => {
-  if (directoryChannel) supabase.removeChannel(directoryChannel);
-});
 </script>
 
 </body>
