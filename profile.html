@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -34,61 +33,62 @@
   </header>
 
   <div id="profile-content" style="display:none;">
-    
-<div id="welcome-banner" class="welcome-banner" style="display:none;">
-  <div class="welcome-banner-title">👋 Welcome to The Blood Lust!</div>
-  <div class="welcome-banner-body">Complete your profile below so we know who you are. Add your IGN, Discord, timezone, and optionally a profile picture. You can then head to the <strong>Apply</strong> page to submit your guild application.</div>
-</div>
 
-<!-- Avatar section -->
-<section class="avatar-section">
-  <div class="avatar-preview-wrapper">
-    <div id="avatar-preview" class="avatar-preview">
-      <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-        <circle cx="12" cy="7" r="4"></circle>
-      </svg>
+    <div id="welcome-banner" class="welcome-banner" style="display:none;">
+      <div class="welcome-banner-title">👋 Welcome to The Blood Lust!</div>
+      <div class="welcome-banner-body">Complete your profile below so we know who you are. Add your IGN, Discord, timezone, and optionally a profile picture. You can then head to the <strong>Apply</strong> page to submit your guild application.</div>
     </div>
-  </div>
-  <div class="avatar-actions">
-    <input type="file" id="avatar-input" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif" style="display:none;">
-    <button type="button" class="avatar-btn" id="avatar-upload-btn">Upload Photo</button>
-    <button type="button" class="avatar-btn avatar-btn-remove" id="avatar-remove-btn" style="display:none;">Remove Photo</button>
-    <div class="avatar-hint">PNG, JPG, WebP, or GIF · Max 2 MB</div>
-    <div id="avatar-msg" class="auth-error" style="display:none; margin-top:12px;"></div>
-  </div>
-</section>
 
-<!-- Profile fields -->
-<form class="apply-form" id="profile-form" onsubmit="return saveProfile(event)">
+    <!-- Avatar section -->
+    <section class="avatar-section">
+      <div class="avatar-preview-wrapper">
+        <div id="avatar-preview" class="avatar-preview">
+          <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+      </div>
+      <div class="avatar-actions">
+        <input type="file" id="avatar-input" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif" style="display:none;">
+        <button type="button" class="avatar-btn" id="avatar-upload-btn">Upload Photo</button>
+        <button type="button" class="avatar-btn avatar-btn-remove" id="avatar-remove-btn" style="display:none;">Remove Photo</button>
+        <div class="avatar-hint">PNG, JPG, WebP, or GIF · Max 2 MB</div>
+        <div id="avatar-msg" class="auth-error" style="display:none; margin-top:12px;"></div>
+      </div>
+    </section>
 
-  <div class="form-group">
-    <label>Email <span class="optional">(read only)</span></label>
-    <input type="email" id="profile-email" disabled>
-  </div>
+    <!-- Profile fields -->
+    <form class="apply-form" id="profile-form" onsubmit="return saveProfile(event)">
 
-  <div class="form-group">
-    <label for="profile-ign">IGN</label>
-    <input type="text" id="profile-ign" placeholder="Your Minecraft IGN">
-  </div>
+      <div class="form-group">
+        <label>Email <span class="optional">(read only)</span></label>
+        <input type="email" id="profile-email" disabled>
+      </div>
 
-  <div class="form-group">
-    <label for="profile-discord">Discord Username</label>
-    <input type="text" id="profile-discord" placeholder="username or @username">
-  </div>
+      <div class="form-group">
+        <label for="profile-ign">IGN <span style="color:#ff6b35;">*</span></label>
+        <input type="text" id="profile-ign" placeholder="Your Minecraft IGN" required minlength="3" maxlength="16" pattern="[A-Za-z0-9_]+">
+        <div class="field-hint">3-16 characters, letters/numbers/underscores only</div>
+      </div>
 
-  <div class="form-group">
-    <label for="profile-timezone">Timezone</label>
-    <input type="text" id="profile-timezone" placeholder="e.g. GMT+1">
-  </div>
+      <div class="form-group">
+        <label for="profile-discord">Discord Username</label>
+        <input type="text" id="profile-discord" placeholder="username or @username">
+      </div>
 
-  <div id="profile-save-msg" class="auth-error" style="display:none;"></div>
+      <div class="form-group">
+        <label for="profile-timezone">Timezone</label>
+        <input type="text" id="profile-timezone" placeholder="e.g. GMT+1">
+      </div>
 
-  <div class="form-submit-area">
-    <button type="submit" class="submit-button">Save Profile</button>
-  </div>
+      <div id="profile-save-msg" class="auth-error" style="display:none;"></div>
 
-</form>
+      <div class="form-submit-area">
+        <button type="submit" class="submit-button">Save Profile</button>
+      </div>
+
+    </form>
 
   </div>
 
@@ -100,11 +100,8 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script src="config.js"></script>
-
 <script src="auth.js"></script>
-
 <script>
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
@@ -300,10 +297,51 @@ async function saveProfile(e) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
 
+  const newIgn = document.getElementById('profile-ign').value.trim();
+
+  // Validate IGN format
+  if (!newIgn) {
+    msgEl.textContent = 'Username is required.';
+    msgEl.style.display = 'block';
+    return false;
+  }
+  if (newIgn.length < 3 || newIgn.length > 16) {
+    msgEl.textContent = 'Username must be between 3 and 16 characters.';
+    msgEl.style.display = 'block';
+    return false;
+  }
+  if (!/^[A-Za-z0-9_]+$/.test(newIgn)) {
+    msgEl.textContent = 'Username can only contain letters, numbers, and underscores.';
+    msgEl.style.display = 'block';
+    return false;
+  }
+
+  // Check uniqueness (case-insensitive) — only if this user's current IGN differs
+  const { data: currentProfile } = await supabase
+    .from('profiles')
+    .select('ign')
+    .eq('id', user.id)
+    .single();
+
+  const currentIgn = (currentProfile?.ign || '').toLowerCase();
+  if (newIgn.toLowerCase() !== currentIgn) {
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('id')
+      .ilike('ign', newIgn)
+      .neq('id', user.id)
+      .maybeSingle();
+    if (existing) {
+      msgEl.textContent = 'That username is already taken by another account.';
+      msgEl.style.display = 'block';
+      return false;
+    }
+  }
+
   const { error } = await supabase
     .from('profiles')
     .update({
-      ign: document.getElementById('profile-ign').value.trim() || null,
+      ign: newIgn,
       discord: document.getElementById('profile-discord').value.trim() || null,
       timezone: document.getElementById('profile-timezone').value.trim() || null,
     })
@@ -316,6 +354,9 @@ async function saveProfile(e) {
     msgEl.textContent = 'Profile saved!';
     msgEl.classList.add('success');
     msgEl.style.display = 'block';
+    // Hide the welcome banner if it was visible
+    const banner = document.getElementById('welcome-banner');
+    if (banner) banner.style.display = 'none';
     setTimeout(() => { msgEl.style.display = 'none'; }, 3000);
   }
   return false;
