@@ -139,9 +139,13 @@ function createAuthMenu(profile) {
   menu.id = 'auth-menu';
   menu.className = 'auth-menu';
   const displayName = profile?.ign || currentUser?.email || 'Account';
+  const publicLink = profile?.ign
+    ? `<a href="profile-view.html?u=${encodeURIComponent(profile.ign)}" class="auth-menu-item">View Public Profile</a>`
+    : '';
   menu.innerHTML = `
     <div class="auth-menu-header">${displayName}</div>
-    <a href="profile.html" class="auth-menu-item">My Profile</a>
+    <a href="profile.html" class="auth-menu-item">My Profile (Edit)</a>
+    ${publicLink}
     <a href="dashboard.html" class="auth-menu-item">Dashboard</a>
     <a href="#" class="auth-menu-item auth-menu-logout" id="auth-menu-logout">Log Out</a>
   `;

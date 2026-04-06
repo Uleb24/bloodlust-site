@@ -33,6 +33,21 @@
   </header>
 
   <div id="dashboard-content" style="display:none;">
+    <section id="grind-wheel-section">
+      <h2 class="section-heading">What Should I Grind Next?</h2>
+      <p style="color:#b8b0a8; margin-bottom:20px;">Spin the wheel for a randomly selected gamemode to focus on.</p>
+      <div class="wheel-wrapper">
+        <div class="wheel-pointer" aria-hidden="true">▼</div>
+        <canvas id="grind-wheel" width="360" height="360"></canvas>
+        <button type="button" class="submit-button wheel-spin-btn" id="wheel-spin-btn">Spin the Wheel</button>
+        <div class="wheel-result" id="wheel-result" style="display:none;">
+          <div class="wheel-result-label">Grind next:</div>
+          <div class="wheel-result-game" id="wheel-result-game"></div>
+          <button type="button" class="wheel-respin-btn" id="wheel-respin-btn">Unsatisfied or dead game? Click here to spin again!</button>
+        </div>
+      </div>
+    </section>
+
     <div id="member-posts-section" style="display:none;">
       <h2 class="section-heading">Latest Guild Updates</h2>
       <div id="dashboard-posts-container"></div>
@@ -256,6 +271,148 @@ async function loadMemberPosts(currentUserId) {
 }
 
 initDashboard();
+
+// ==========================================
+// GRIND WHEEL
+// ==========================================
+const WHEEL_GAMES = [
+  'Bedwars','Skywars','Duels','TNT Games','Arena Brawl','Skyclash','Crazy Walls',
+  'UHC','Speed UHC','TKR','Paintball','Blitz SG','Walls','Mega Walls','VampireZ',
+  'Build Battle','Smash Heroes','Quakecraft','Warlords','Cops and Crims',
+  'Murder Mystery','Wool Wars'
+];
+
+(function initWheel() {
+  const canvas = document.getElementById('grind-wheel');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const size = canvas.width;
+  const cx = size / 2;
+  const cy = size / 2;
+  const radius = size / 2 - 6;
+  const n = WHEEL_GAMES.length;
+  const arc = (Math.PI * 2) / n;
+
+  // Alternating color palette that matches the site
+  const colors = [
+    '#8b0000', '#dc2626', '#ea580c', '#f97316',
+    '#6b1111', '#b91c1c', '#c2410c', '#9a3412'
+  ];
+
+  let currentRotation = 0; // radians
+  let spinning = false;
+
+  function drawWheel(rotation) {
+    ctx.clearRect(0, 0, size, size);
+
+    // Outer glow ring
+    ctx.save();
+    ctx.shadowColor = 'rgba(234, 88, 12, 0.6)';
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius + 2, 0, Math.PI * 2);
+    ctx.strokeStyle = '#ea580c';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.restore();
+
+    // Segments
+    for (let i = 0; i < n; i++) {
+      const start = rotation + i * arc;
+      const end = start + arc;
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, radius, start, end);
+      ctx.closePath();
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(11, 8, 8, 0.6)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Label
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(start + arc / 2);
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px "Segoe UI", sans-serif';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+      ctx.shadowBlur = 3;
+      const label = WHEEL_GAMES[i];
+      ctx.fillText(label, radius - 14, 4);
+      ctx.restore();
+    }
+
+    // Center hub
+    ctx.beginPath();
+    ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+    const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, 20);
+    grad.addColorStop(0, '#ff6b35');
+    grad.addColorStop(1, '#8b0000');
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = '#0b0808';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
+  function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  function spin() {
+    if (spinning) return;
+    spinning = true;
+
+    const spinBtn = document.getElementById('wheel-spin-btn');
+    const respinBtn = document.getElementById('wheel-respin-btn');
+    const resultEl = document.getElementById('wheel-result');
+    spinBtn.disabled = true;
+    if (respinBtn) respinBtn.disabled = true;
+
+    // Pick a random target segment
+    const targetIdx = Math.floor(Math.random() * n);
+    // We want the target to end up at the TOP of the wheel where the pointer is.
+    // Pointer is at angle = -PI/2 (top). Segment i's center angle (at rotation 0)
+    // is (i * arc) + (arc / 2). So rotation needed: -PI/2 - (i*arc + arc/2)
+    // Plus spins (e.g., 5 full revolutions) for drama.
+    const fullSpins = 5 + Math.floor(Math.random() * 2);
+    const targetCenter = targetIdx * arc + arc / 2;
+    const finalRotation = (Math.PI * 2 * fullSpins) + (-Math.PI / 2 - targetCenter);
+
+    const startRotation = currentRotation % (Math.PI * 2);
+    const delta = finalRotation - startRotation;
+    const duration = 4200;
+    const startTime = performance.now();
+
+    function animate(now) {
+      const elapsed = now - startTime;
+      const t = Math.min(elapsed / duration, 1);
+      const eased = easeOutCubic(t);
+      currentRotation = startRotation + delta * eased;
+      drawWheel(currentRotation);
+      if (t < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        spinning = false;
+        spinBtn.disabled = false;
+        if (respinBtn) respinBtn.disabled = false;
+        document.getElementById('wheel-result-game').textContent = WHEEL_GAMES[targetIdx];
+        resultEl.style.display = 'block';
+        spinBtn.style.display = 'none';
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+
+  drawWheel(currentRotation);
+  document.getElementById('wheel-spin-btn').addEventListener('click', spin);
+  const respinBtn = document.getElementById('wheel-respin-btn');
+  if (respinBtn) respinBtn.addEventListener('click', spin);
+})();
 </script>
 
 </body>

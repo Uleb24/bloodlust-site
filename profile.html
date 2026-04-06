@@ -82,10 +82,52 @@
         <input type="text" id="profile-timezone" placeholder="e.g. GMT+1">
       </div>
 
+      <div class="form-group">
+        <label for="profile-country">Country</label>
+        <select id="profile-country">
+          <option value="">— None —</option>
+        </select>
+        <div class="field-hint">Shown as a flag next to your name on your public profile.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="profile-status">Custom Status</label>
+        <input type="text" id="profile-status" maxlength="100" placeholder="Short status line (e.g. Grinding Bedwars)">
+        <div class="field-hint">Max 100 characters.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="profile-bio">Bio</label>
+        <textarea id="profile-bio" rows="3" maxlength="280" placeholder="Tell people about yourself..."></textarea>
+        <div class="field-hint">Max 280 characters.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="profile-favorite">Favorite Gamemodes</label>
+        <input type="text" id="profile-favorite" maxlength="200" placeholder="e.g. Bedwars, Skywars, UHC">
+      </div>
+
+      <div class="form-group">
+        <label for="profile-karma">25karma Profile Link</label>
+        <input type="url" id="profile-karma" placeholder="https://25karma.xyz/player/YourIGN">
+        <div class="field-hint">Link to your Hypixel stats on 25karma.</div>
+      </div>
+
+      <div class="form-group">
+        <label>Goals</label>
+        <div id="goals-list" class="goals-list"></div>
+        <div class="goals-add-row">
+          <input type="text" id="goal-new-input" placeholder="Add a new goal..." maxlength="120">
+          <button type="button" id="goal-add-btn" class="admin-btn admin-btn-role-member">+ Add</button>
+        </div>
+        <div class="field-hint">Track what you're working towards. Click the circle to mark done.</div>
+      </div>
+
       <div id="profile-save-msg" class="auth-error" style="display:none;"></div>
 
       <div class="form-submit-area">
         <button type="submit" class="submit-button">Save Profile</button>
+        <a href="#" id="view-public-profile-link" class="submit-hint" style="margin-top:12px; color:#ff6b35; text-decoration:none;">View my public profile →</a>
       </div>
 
     </form>
@@ -135,6 +177,74 @@ function showAvatarMsg(text, isSuccess = false) {
   }
 }
 
+// ISO 3166 country list (code → name). Small common list first, then the rest.
+const COUNTRIES = [
+  ['', '— None —'],
+  ['US', 'United States'], ['CA', 'Canada'], ['GB', 'United Kingdom'], ['AU', 'Australia'],
+  ['DE', 'Germany'], ['FR', 'France'], ['ES', 'Spain'], ['IT', 'Italy'], ['NL', 'Netherlands'],
+  ['BE', 'Belgium'], ['SE', 'Sweden'], ['NO', 'Norway'], ['DK', 'Denmark'], ['FI', 'Finland'],
+  ['PL', 'Poland'], ['RO', 'Romania'], ['CZ', 'Czechia'], ['AT', 'Austria'], ['CH', 'Switzerland'],
+  ['PT', 'Portugal'], ['IE', 'Ireland'], ['GR', 'Greece'], ['HU', 'Hungary'], ['BG', 'Bulgaria'],
+  ['HR', 'Croatia'], ['RS', 'Serbia'], ['SK', 'Slovakia'], ['SI', 'Slovenia'], ['LT', 'Lithuania'],
+  ['LV', 'Latvia'], ['EE', 'Estonia'], ['IS', 'Iceland'], ['LU', 'Luxembourg'], ['MT', 'Malta'],
+  ['UA', 'Ukraine'], ['RU', 'Russia'], ['TR', 'Turkey'],
+  ['BR', 'Brazil'], ['MX', 'Mexico'], ['AR', 'Argentina'], ['CL', 'Chile'], ['CO', 'Colombia'],
+  ['PE', 'Peru'], ['VE', 'Venezuela'], ['UY', 'Uruguay'],
+  ['JP', 'Japan'], ['KR', 'South Korea'], ['CN', 'China'], ['HK', 'Hong Kong'], ['TW', 'Taiwan'],
+  ['SG', 'Singapore'], ['MY', 'Malaysia'], ['TH', 'Thailand'], ['ID', 'Indonesia'],
+  ['PH', 'Philippines'], ['VN', 'Vietnam'], ['IN', 'India'], ['PK', 'Pakistan'],
+  ['IL', 'Israel'], ['AE', 'United Arab Emirates'], ['SA', 'Saudi Arabia'],
+  ['NZ', 'New Zealand'], ['ZA', 'South Africa'], ['EG', 'Egypt'], ['MA', 'Morocco'],
+];
+
+function flagEmoji(code) {
+  if (!code || code.length !== 2) return '';
+  const cc = code.toUpperCase();
+  const A = 0x1F1E6;
+  return String.fromCodePoint(A + cc.charCodeAt(0) - 65) + String.fromCodePoint(A + cc.charCodeAt(1) - 65);
+}
+
+let currentGoals = [];
+
+function renderGoals() {
+  const list = document.getElementById('goals-list');
+  if (currentGoals.length === 0) {
+    list.innerHTML = '<div style="color:#6b5d53; font-style:italic; font-size:13px; padding:8px 0;">No goals yet. Add one below.</div>';
+    return;
+  }
+  list.innerHTML = currentGoals.map((g, i) => `
+    <div class="goal-row ${g.done ? 'goal-done' : ''}">
+      <button type="button" class="goal-toggle" data-idx="${i}" aria-label="Toggle done">
+        ${g.done ? '✓' : '◯'}
+      </button>
+      <span class="goal-text">${(g.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+      <button type="button" class="goal-delete" data-idx="${i}" aria-label="Delete">✕</button>
+    </div>
+  `).join('');
+  list.querySelectorAll('.goal-toggle').forEach(b => {
+    b.addEventListener('click', () => {
+      const i = parseInt(b.dataset.idx);
+      currentGoals[i].done = !currentGoals[i].done;
+      renderGoals();
+    });
+  });
+  list.querySelectorAll('.goal-delete').forEach(b => {
+    b.addEventListener('click', () => {
+      const i = parseInt(b.dataset.idx);
+      currentGoals.splice(i, 1);
+      renderGoals();
+    });
+  });
+}
+
+function populateCountrySelect(selected) {
+  const sel = document.getElementById('profile-country');
+  sel.innerHTML = COUNTRIES.map(([code, name]) => {
+    const flag = code ? flagEmoji(code) + ' ' : '';
+    return `<option value="${code}"${code === selected ? ' selected' : ''}>${flag}${name}</option>`;
+  }).join('');
+}
+
 async function initProfile() {
   const user = await requireAuth();
   if (!user) return;
@@ -153,13 +263,28 @@ async function initProfile() {
     document.getElementById('profile-ign').value = profile.ign || '';
     document.getElementById('profile-discord').value = profile.discord || '';
     document.getElementById('profile-timezone').value = profile.timezone || '';
+    document.getElementById('profile-bio').value = profile.bio || '';
+    document.getElementById('profile-favorite').value = profile.favorite_gamemodes || '';
+    document.getElementById('profile-status').value = profile.custom_status || '';
+    document.getElementById('profile-karma').value = profile.karma_link || '';
+    populateCountrySelect(profile.country_code || '');
+    currentGoals = Array.isArray(profile.goals) ? profile.goals : [];
+    renderGoals();
     setAvatarPreview(profile.avatar_url);
+
+    // Update "view public profile" link
+    if (profile.ign) {
+      document.getElementById('view-public-profile-link').href = 'profile-view.html?u=' + encodeURIComponent(profile.ign);
+    }
 
     // Show welcome banner if profile is incomplete (no IGN set)
     if (!profile.ign) {
       const banner = document.getElementById('welcome-banner');
       if (banner) banner.style.display = 'block';
     }
+  } else {
+    populateCountrySelect('');
+    renderGoals();
   }
 
   // Wire up avatar buttons
@@ -168,6 +293,25 @@ async function initProfile() {
   });
   document.getElementById('avatar-input').addEventListener('change', handleAvatarUpload);
   document.getElementById('avatar-remove-btn').addEventListener('click', handleAvatarRemove);
+
+  // Wire up goal adding
+  document.getElementById('goal-add-btn').addEventListener('click', addGoal);
+  document.getElementById('goal-new-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); addGoal(); }
+  });
+}
+
+function addGoal() {
+  const input = document.getElementById('goal-new-input');
+  const text = input.value.trim();
+  if (!text) return;
+  if (currentGoals.length >= 20) {
+    alert('Maximum 20 goals.');
+    return;
+  }
+  currentGoals.push({ text, done: false });
+  input.value = '';
+  renderGoals();
 }
 
 async function handleAvatarUpload(e) {
@@ -344,6 +488,12 @@ async function saveProfile(e) {
       ign: newIgn,
       discord: document.getElementById('profile-discord').value.trim() || null,
       timezone: document.getElementById('profile-timezone').value.trim() || null,
+      bio: document.getElementById('profile-bio').value.trim() || null,
+      favorite_gamemodes: document.getElementById('profile-favorite').value.trim() || null,
+      custom_status: document.getElementById('profile-status').value.trim() || null,
+      country_code: document.getElementById('profile-country').value || null,
+      karma_link: document.getElementById('profile-karma').value.trim() || null,
+      goals: currentGoals,
     })
     .eq('id', user.id);
 
