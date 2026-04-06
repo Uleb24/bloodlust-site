@@ -2383,6 +2383,101 @@ body {
   text-transform: uppercase;
 }
 
+/* =========== COMPACT ADMIN CARDS (history) =========== */
+.admin-app-compact {
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.admin-compact-details {
+  width: 100%;
+}
+
+.admin-compact-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  transition: background 0.15s ease;
+  user-select: none;
+}
+
+.admin-compact-summary::-webkit-details-marker { display: none; }
+.admin-compact-summary::marker { display: none; content: ''; }
+
+.admin-compact-summary:hover {
+  background: rgba(40, 24, 24, 0.6);
+}
+
+.admin-compact-summary::after {
+  content: '▸';
+  color: #8b7c6f;
+  font-size: 14px;
+  transition: transform 0.2s ease;
+  margin-left: auto;
+}
+
+details[open] > .admin-compact-summary::after {
+  transform: rotate(90deg);
+}
+
+.admin-compact-expand {
+  padding: 0 24px 24px;
+  border-top: 1px solid rgba(220, 38, 38, 0.15);
+  padding-top: 20px;
+  animation: slide-down 0.2s ease;
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========== MEMBER SEARCH =========== */
+.member-search-wrapper {
+  max-width: 500px;
+  margin: 0 auto 40px;
+  padding: 0 20px;
+}
+
+.member-search-input {
+  width: 100%;
+  padding: 14px 18px;
+  background: rgba(20, 14, 14, 0.7);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-left: 3px solid #ea580c;
+  color: #e8e2dd;
+  font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+  transition: all 0.15s ease;
+}
+
+.member-search-input:focus {
+  outline: none;
+  border-color: #ea580c;
+  background: rgba(30, 18, 18, 0.85);
+  box-shadow: 0 0 12px rgba(234, 88, 12, 0.2);
+}
+
+.member-search-input::placeholder {
+  color: #6b5d53;
+  font-style: italic;
+}
+
+.member-search-count {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #8b7c6f;
+  font-style: italic;
+  letter-spacing: 0.5px;
+  min-height: 16px;
+}
+
 /* =========== INDIVIDUAL LEADERBOARD CARDS =========== */
 .leaderboard-scroll {
   position: relative;
