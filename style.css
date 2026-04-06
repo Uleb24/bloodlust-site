@@ -22,7 +22,8 @@ body > * {
 
 /* Exceptions: absolutely-positioned floating elements shouldn't stretch */
 body > #auth-menu,
-body > .modal-overlay {
+body > .modal-overlay,
+body > .presence-sidebar {
   width: auto;
 }
 
@@ -2381,6 +2382,245 @@ body {
   margin-top: 28px !important;
   letter-spacing: 2px;
   text-transform: uppercase;
+}
+
+/* =========== PRESENCE SIDEBAR (who's online) =========== */
+.presence-sidebar {
+  font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+}
+
+.presence-toggle {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 180;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, rgba(139, 0, 0, 0.85), rgba(234, 88, 12, 0.75));
+  border: 1px solid rgba(234, 88, 12, 0.7);
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: -4px 4px 14px rgba(0, 0, 0, 0.5), 0 0 12px rgba(234, 88, 12, 0.25);
+  transition: all 0.2s ease;
+}
+
+.presence-toggle:hover {
+  background: linear-gradient(135deg, rgba(139, 0, 0, 1), rgba(249, 115, 22, 0.85));
+  box-shadow: -4px 4px 18px rgba(0, 0, 0, 0.6), 0 0 18px rgba(249, 115, 22, 0.5);
+  transform: translateY(-50%) translateX(-2px);
+}
+
+.presence-toggle-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: #55FF55;
+  color: #0b0808;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px rgba(85, 255, 85, 0.5);
+  border: 2px solid #0b0808;
+}
+
+.presence-panel {
+  position: fixed;
+  top: 50%;
+  right: 56px;
+  transform: translateY(-50%) translateX(20px);
+  z-index: 180;
+  width: 280px;
+  max-height: 70vh;
+  background: #0b0808;
+  border: 1px solid rgba(234, 88, 12, 0.5);
+  border-left: 3px solid #ea580c;
+  box-shadow: -8px 8px 30px rgba(0, 0, 0, 0.85), 0 0 24px rgba(234, 88, 12, 0.2);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+
+.presence-panel.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(-50%) translateX(0);
+}
+
+.presence-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(220, 38, 38, 0.25);
+  background: linear-gradient(90deg, rgba(139, 0, 0, 0.3), transparent);
+}
+
+.presence-panel-title {
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #ff6b35;
+}
+
+.presence-panel-close {
+  background: none;
+  border: none;
+  color: #8b7c6f;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 6px;
+  transition: color 0.15s ease;
+}
+
+.presence-panel-close:hover { color: #ff6b35; }
+
+.presence-panel-list {
+  overflow-y: auto;
+  max-height: calc(70vh - 52px);
+  padding: 8px 0;
+}
+
+.presence-panel-list::-webkit-scrollbar { width: 6px; }
+.presence-panel-list::-webkit-scrollbar-track { background: rgba(20, 14, 14, 0.6); }
+.presence-panel-list::-webkit-scrollbar-thumb { background: rgba(234, 88, 12, 0.5); border-radius: 3px; }
+
+.presence-empty {
+  padding: 20px 18px;
+  color: #6b5d53;
+  font-style: italic;
+  font-size: 13px;
+  text-align: center;
+}
+
+.presence-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  transition: background 0.15s ease;
+  border-left: 2px solid transparent;
+}
+
+.presence-row:hover { background: rgba(30, 18, 18, 0.8); }
+
+.presence-row-me {
+  background: rgba(234, 88, 12, 0.06);
+  border-left-color: #ea580c;
+}
+
+.presence-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(139, 124, 111, 0.4);
+  background: rgba(6, 4, 4, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8b7c6f;
+}
+
+.presence-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.presence-avatar-staff {
+  border-color: #ea580c;
+  box-shadow: 0 0 8px rgba(234, 88, 12, 0.4);
+}
+
+.presence-avatar-member {
+  border-color: #55FF55;
+  box-shadow: 0 0 8px rgba(85, 255, 85, 0.35);
+}
+
+.presence-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.presence-name {
+  font-size: 13px;
+  font-weight: bold;
+  color: #e8e2dd;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.presence-you {
+  color: #8b7c6f;
+  font-weight: normal;
+  font-size: 11px;
+  font-style: italic;
+}
+
+.presence-role {
+  font-size: 9px;
+  font-weight: bold;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  align-self: flex-start;
+  color: #0b0808;
+}
+
+.presence-role-staff { background: #ea580c; }
+.presence-role-member { background: #55FF55; }
+
+.presence-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #55FF55;
+  box-shadow: 0 0 8px rgba(85, 255, 85, 0.7), 0 0 0 2px rgba(85, 255, 85, 0.2);
+  flex-shrink: 0;
+  animation: presence-pulse 2s ease-in-out infinite;
+}
+
+@keyframes presence-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(85, 255, 85, 0.7), 0 0 0 2px rgba(85, 255, 85, 0.2); }
+  50% { box-shadow: 0 0 12px rgba(85, 255, 85, 1), 0 0 0 3px rgba(85, 255, 85, 0.3); }
+}
+
+@media (max-width: 700px) {
+  .presence-toggle { top: auto; bottom: 20px; transform: none; }
+  .presence-toggle:hover { transform: translateX(-2px); }
+  .presence-panel {
+    right: 56px;
+    bottom: 20px;
+    top: auto;
+    transform: translateY(0) translateX(20px);
+    width: calc(100vw - 80px);
+    max-width: 300px;
+    max-height: 60vh;
+  }
+  .presence-panel.open { transform: translateY(0) translateX(0); }
+  .presence-panel-list { max-height: calc(60vh - 52px); }
 }
 
 /* =========== COMPACT ADMIN CARDS (history) =========== */
