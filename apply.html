@@ -641,6 +641,14 @@ async function submitApplication(e) {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (user) {
+    // Logged in: verify they can still apply (e.g., didn't leave the page open for days)
+    const { data: canApplyResult } = await supabase.rpc('can_user_apply', { check_user_id: user.id });
+    if (canApplyResult && !canApplyResult.can_apply) {
+      alert('You are not eligible to apply right now. Refreshing the page for details.');
+      window.location.reload();
+      return false;
+    }
+
     // Logged in: submit directly to database
     const submitBtn = document.querySelector('.submit-button');
     submitBtn.disabled = true;
@@ -742,7 +750,54 @@ async function autofillFromProfile() {
   }
 }
 // Run once DOM + scripts are ready
-window.addEventListener('load', () => { setTimeout(autofillFromProfile, 200); });
+window.addEventListener('load', () => {
+  setTimeout(autofillFromProfile, 200);
+  setTimeout(checkCanApply, 300);
+});
+
+async function checkCanApply() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return; // Logged-out users can always attempt (they go through the modal flow)
+
+  const { data, error } = await supabase.rpc('can_user_apply', { check_user_id: user.id });
+  if (error || !data) return;
+  if (data.can_apply) return;
+
+  // Replace form with appropriate message based on reason
+  const form = document.getElementById('apply-form');
+  if (!form) return;
+
+  let title = 'Unable to Apply';
+  let body = '';
+
+  if (data.reason === 'already_in_guild') {
+    title = "You're Already In";
+    body = '<p>You are already a member of The Blood Lust. No need to apply again.</p>'
+      + '<p><a href="dashboard.html" class="submit-button" style="display:inline-block; margin-top:16px; text-decoration:none;">Go to Dashboard</a></p>';
+  } else if (data.reason === 'pending_exists') {
+    title = 'Application Pending';
+    body = '<p>You already have a pending application under review. Please wait for staff to process it before submitting another.</p>'
+      + '<p><a href="dashboard.html" class="submit-button" style="display:inline-block; margin-top:16px; text-decoration:none;">Check Status</a></p>';
+  } else if (data.reason === 'already_accepted') {
+    title = 'Already Accepted';
+    body = '<p>Your previous application was accepted. If you are not in the guild yet, contact staff on Discord.</p>'
+      + '<p><a href="dashboard.html" class="submit-button" style="display:inline-block; margin-top:16px; text-decoration:none;">Go to Dashboard</a></p>';
+  } else if (data.reason === 'denied_cooldown') {
+    const cooldownEnd = new Date(data.cooldown_ends);
+    const daysLeft = Math.ceil((cooldownEnd - new Date()) / (1000 * 60 * 60 * 24));
+    title = 'Cooldown Active';
+    body = `<p>Your previous application was denied. You can apply again in <strong>${daysLeft} day${daysLeft === 1 ? '' : 's'}</strong>.</p>`
+      + `<p style="color:#8b7c6f; font-size:13px;">Cooldown ends on ${cooldownEnd.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.</p>`
+      + '<p>Use this time to improve your stats and come back stronger.</p>'
+      + '<p><a href="dashboard.html" class="submit-button" style="display:inline-block; margin-top:16px; text-decoration:none;">Check Status</a></p>';
+  }
+
+  form.innerHTML = `<div class="thank-you-card rate-limit-card">
+    <div class="thank-you-mark">◆</div>
+    <h2>${title}</h2>
+    ${body}
+  </div>`;
+}
 
 function showDashboardThankYou() {
   const form = document.getElementById('apply-form');
