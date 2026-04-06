@@ -48,6 +48,19 @@ async function updateAuthUI() {
 
     currentProfile = profile;
 
+    // If they don't have an IGN set, push them to the profile page to fill it in.
+    // We don't do this on the profile page itself (obviously), and we avoid
+    // redirect loops by checking the current path.
+    if (profile && !profile.ign) {
+      const path = window.location.pathname;
+      const isOnProfilePage = path.endsWith('/profile.html') || path.endsWith('/profile');
+      const isOnLoginPage = path.endsWith('/login.html') || path.endsWith('/login');
+      if (!isOnProfilePage && !isOnLoginPage) {
+        window.location.href = 'profile.html';
+        return;
+      }
+    }
+
     authIcon.classList.add('logged-in');
     const isStaff = profile?.role === 'staff';
     const isMember = profile?.role === 'member';
