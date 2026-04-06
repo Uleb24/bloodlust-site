@@ -84,10 +84,15 @@
       </div>
 
       <div class="form-group">
-        <label for="profile-country">Country</label>
-        <select id="profile-country">
-          <option value="">— None —</option>
-        </select>
+        <label for="country-trigger">Country</label>
+        <div class="country-select" id="country-select">
+          <button type="button" class="country-trigger" id="country-trigger" aria-haspopup="listbox" aria-expanded="false">
+            <span class="country-trigger-content" id="country-trigger-content">— None —</span>
+            <span class="country-trigger-arrow">▾</span>
+          </button>
+          <div class="country-menu" id="country-menu" role="listbox" aria-hidden="true"></div>
+          <input type="hidden" id="profile-country" value="">
+        </div>
         <div class="field-hint">Shown as a flag next to your name on your public profile.</div>
       </div>
 
@@ -117,12 +122,23 @@
       <div class="form-group">
         <label>Goals</label>
         <div id="goals-list" class="goals-list"></div>
-        <div class="goals-add-row">
-          <input type="text" id="goal-new-input" placeholder="Goal description (e.g. Reach Expert title)" maxlength="120">
-          <input type="number" id="goal-new-target" placeholder="Target (e.g. 30000)" min="0" step="any">
-          <button type="button" id="goal-add-btn" class="admin-btn admin-btn-role-member">+ Add</button>
+        <div class="goal-add-card">
+          <div class="goal-add-title">Add a New Goal</div>
+          <input type="text" id="goal-new-input" class="goal-add-desc" placeholder="Goal description (e.g. Reach Expert title in Build Battle)" maxlength="120">
+          <div class="goal-add-numbers">
+            <div class="goal-add-field">
+              <label class="goal-add-label" for="goal-new-current">Current</label>
+              <input type="number" id="goal-new-current" min="0" step="any" placeholder="e.g. 27000">
+            </div>
+            <div class="goal-add-arrow">→</div>
+            <div class="goal-add-field">
+              <label class="goal-add-label" for="goal-new-target">Target</label>
+              <input type="number" id="goal-new-target" min="0" step="any" placeholder="e.g. 30000">
+            </div>
+            <button type="button" id="goal-add-btn" class="goal-add-btn">+ Add Goal</button>
+          </div>
         </div>
-        <div class="field-hint">Each goal has a numeric target (e.g. "30000 score"). Update your current progress to track how close you are. When you reach your target, click "Mark as Achievement" to make it permanent.</div>
+        <div class="field-hint">Your starting point is locked when you add a goal. Progress is measured from there — so if you start at 27,000 toward 30,000, reaching 28,500 shows as 50% progress.</div>
       </div>
 
       <div class="form-group">
@@ -216,13 +232,32 @@ function flagEmoji(code) {
 let currentGoals = [];
 let currentAchievements = [];
 
-function colorForProgress(current, target) {
-  if (!target || target <= 0) return 'goal-red';
-  const pct = (current / target) * 100;
+// Progress = (current - start) / (target - start) * 100
+// Ensures a goal "27000 -> 28000" starts at 0% (not 96%) and reaches 100% only when current hits target
+function goalProgress(g) {
+  const start = Number(g.start) || 0;
+  const current = Number(g.current) || 0;
+  const target = Number(g.target) || 0;
+  if (target <= start) return 0;
+  const range = target - start;
+  const made = Math.max(0, current - start);
+  return Math.min(100, (made / range) * 100);
+}
+
+function colorForPct(pct) {
   if (pct >= 100) return 'goal-done';
   if (pct >= 67) return 'goal-green';
   if (pct >= 34) return 'goal-yellow';
   return 'goal-red';
+}
+
+function fmtPct(pct) {
+  // 1 decimal, but drop trailing .0 if round
+  return (Math.round(pct * 10) / 10).toFixed(1).replace(/\.0$/, '') + '%';
+}
+
+function fmtNum(n) {
+  return Number(n).toLocaleString('en-US');
 }
 
 function escapeText(s) {
@@ -236,26 +271,37 @@ function renderGoals() {
     return;
   }
   list.innerHTML = currentGoals.map((g, i) => {
+    const start = Number(g.start) || 0;
     const target = Number(g.target) || 0;
     const current = Number(g.current) || 0;
-    const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
-    const colorCls = colorForProgress(current, target);
+    const pct = goalProgress(g);
+    const colorCls = colorForPct(pct);
     const canComplete = target > 0 && current >= target;
     return `
       <div class="goal-row ${colorCls}">
-        <div class="goal-row-main">
-          <span class="goal-text">${escapeText(g.text)}</span>
+        <div class="goal-row-header">
+          <div class="goal-text">${escapeText(g.text)}</div>
+          <div class="goal-pct ${colorCls}">${fmtPct(pct)}</div>
           <button type="button" class="goal-delete" data-idx="${i}" aria-label="Delete goal">✕</button>
         </div>
-        <div class="goal-progress-row">
-          <input type="number" class="goal-num-input" data-idx="${i}" data-field="current" value="${current}" min="0" step="any" placeholder="current">
-          <span class="goal-progress-sep">/</span>
-          <input type="number" class="goal-num-input" data-idx="${i}" data-field="target" value="${target || ''}" min="0" step="any" placeholder="target">
-          <span class="goal-pct">${pct}%</span>
-        </div>
+
         <div class="goal-progress-bar">
           <div class="goal-progress-fill ${colorCls}" style="width:${pct}%;"></div>
         </div>
+
+        <div class="goal-edit-row">
+          <div class="goal-edit-field">
+            <label class="goal-edit-label">Current</label>
+            <input type="number" class="goal-num-input" data-idx="${i}" data-field="current" value="${current}" min="0" step="any">
+          </div>
+          <div class="goal-edit-sep">/</div>
+          <div class="goal-edit-field">
+            <label class="goal-edit-label">Target</label>
+            <input type="number" class="goal-num-input" data-idx="${i}" data-field="target" value="${target}" min="0" step="any">
+          </div>
+          <div class="goal-edit-start">Starting from <strong>${fmtNum(start)}</strong></div>
+        </div>
+
         ${canComplete ? `<button type="button" class="goal-complete-btn" data-idx="${i}">✓ Mark as Achievement</button>` : ''}
       </div>
     `;
@@ -265,6 +311,7 @@ function renderGoals() {
   list.querySelectorAll('.goal-delete').forEach(b => {
     b.addEventListener('click', () => {
       const i = parseInt(b.dataset.idx);
+      if (!confirm('Delete this goal? This cannot be undone.')) return;
       currentGoals.splice(i, 1);
       renderGoals();
     });
@@ -281,7 +328,7 @@ function renderGoals() {
     });
   });
 
-  // Complete buttons — manual, with strong warning
+  // Complete buttons
   list.querySelectorAll('.goal-complete-btn').forEach(b => {
     b.addEventListener('click', () => {
       const i = parseInt(b.dataset.idx);
@@ -336,11 +383,76 @@ function showAchievementToast(text) {
 }
 
 function populateCountrySelect(selected) {
-  const sel = document.getElementById('profile-country');
-  sel.innerHTML = COUNTRIES.map(([code, name]) => {
-    const flag = code ? flagEmoji(code) + ' ' : '';
-    return `<option value="${code}"${code === selected ? ' selected' : ''}>${flag}${name}</option>`;
+  const menu = document.getElementById('country-menu');
+  const trigger = document.getElementById('country-trigger-content');
+  const hidden = document.getElementById('profile-country');
+
+  // Render the dropdown menu items
+  menu.innerHTML = COUNTRIES.map(([code, name]) => {
+    const flag = code ? flagEmoji(code) : '';
+    const isSelected = code === selected;
+    return `<div class="country-option ${isSelected ? 'selected' : ''}" role="option" data-code="${code}">
+      <span class="country-option-flag">${flag || '·'}</span>
+      <span class="country-option-name">${name}</span>
+      ${isSelected ? '<span class="country-option-check">✓</span>' : ''}
+    </div>`;
   }).join('');
+
+  // Set the trigger display
+  const match = COUNTRIES.find(([c]) => c === selected);
+  if (match) {
+    const [code, name] = match;
+    const flag = code ? flagEmoji(code) : '';
+    trigger.innerHTML = flag
+      ? `<span class="country-trigger-flag">${flag}</span> <span class="country-trigger-name">${name}</span>`
+      : `<span class="country-trigger-name">${name}</span>`;
+  } else {
+    trigger.textContent = '— None —';
+  }
+  hidden.value = selected || '';
+
+  // Wire up clicks on options
+  menu.querySelectorAll('.country-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const code = opt.dataset.code;
+      populateCountrySelect(code);
+      closeCountryMenu();
+    });
+  });
+}
+
+function openCountryMenu() {
+  const select = document.getElementById('country-select');
+  const trigger = document.getElementById('country-trigger');
+  const menu = document.getElementById('country-menu');
+  select.classList.add('open');
+  trigger.setAttribute('aria-expanded', 'true');
+  menu.setAttribute('aria-hidden', 'false');
+
+  // Scroll to selected option
+  const selected = menu.querySelector('.country-option.selected');
+  if (selected) selected.scrollIntoView({ block: 'center' });
+
+  // Close on outside click
+  setTimeout(() => document.addEventListener('click', handleCountryOutside), 0);
+}
+
+function closeCountryMenu() {
+  const select = document.getElementById('country-select');
+  const trigger = document.getElementById('country-trigger');
+  const menu = document.getElementById('country-menu');
+  if (!select) return;
+  select.classList.remove('open');
+  if (trigger) trigger.setAttribute('aria-expanded', 'false');
+  if (menu) menu.setAttribute('aria-hidden', 'true');
+  document.removeEventListener('click', handleCountryOutside);
+}
+
+function handleCountryOutside(e) {
+  const select = document.getElementById('country-select');
+  if (select && !select.contains(e.target)) {
+    closeCountryMenu();
+  }
 }
 
 async function initProfile() {
@@ -368,7 +480,7 @@ async function initProfile() {
     populateCountrySelect(profile.country_code || '');
     currentGoals = Array.isArray(profile.goals) ? profile.goals : [];
     currentAchievements = Array.isArray(profile.achievements) ? profile.achievements : [];
-    // Migrate old goals: ensure target/current shape, move old done/100% to achievements
+    // Migrate old goals: ensure start/target/current shape
     const stillActive = [];
     currentGoals.forEach(g => {
       if (g.done === true) {
@@ -386,6 +498,8 @@ async function initProfile() {
       }
       if (typeof g.current !== 'number') g.current = 0;
       if (typeof g.target !== 'number') g.target = 0;
+      // If start is missing (existing goals before Option C), set start = 0 to preserve old behavior
+      if (typeof g.start !== 'number') g.start = 0;
       stillActive.push(g);
     });
     currentGoals = stillActive;
@@ -418,19 +532,44 @@ async function initProfile() {
 
   // Wire up goal adding
   document.getElementById('goal-add-btn').addEventListener('click', addGoal);
-  document.getElementById('goal-new-input').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); addGoal(); }
+  ['goal-new-input', 'goal-new-current', 'goal-new-target'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); addGoal(); }
+    });
   });
+
+  // Wire up country dropdown toggle
+  const countryTrigger = document.getElementById('country-trigger');
+  if (countryTrigger) {
+    countryTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const select = document.getElementById('country-select');
+      if (select.classList.contains('open')) {
+        closeCountryMenu();
+      } else {
+        openCountryMenu();
+      }
+    });
+  }
 }
 
 function addGoal() {
   const textInput = document.getElementById('goal-new-input');
+  const currentInput = document.getElementById('goal-new-current');
   const targetInput = document.getElementById('goal-new-target');
   const text = textInput.value.trim();
+  const current = parseFloat(currentInput.value);
   const target = parseFloat(targetInput.value);
+
   if (!text) {
     alert('Please enter a goal description.');
     textInput.focus();
+    return;
+  }
+  if (isNaN(current) || current < 0) {
+    alert('Please enter your current progress (numeric).');
+    currentInput.focus();
     return;
   }
   if (isNaN(target) || target <= 0) {
@@ -438,12 +577,19 @@ function addGoal() {
     targetInput.focus();
     return;
   }
+  if (target <= current) {
+    alert('Your target must be greater than your current value.');
+    targetInput.focus();
+    return;
+  }
   if (currentGoals.length >= 20) {
     alert('Maximum 20 active goals.');
     return;
   }
-  currentGoals.push({ text, target, current: 0 });
+  // start = current at the moment of creation (Option C)
+  currentGoals.push({ text, start: current, current, target });
   textInput.value = '';
+  currentInput.value = '';
   targetInput.value = '';
   renderGoals();
 }
