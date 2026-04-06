@@ -36,8 +36,8 @@
 
     <div class="admin-controls">
       <div class="admin-filters" id="admin-filters">
-        <button class="admin-filter active" data-filter="all">All <span class="admin-filter-count" id="count-all">0</span></button>
-        <button class="admin-filter" data-filter="pending">Pending <span class="admin-filter-count" id="count-pending">0</span></button>
+        <button class="admin-filter" data-filter="all">All <span class="admin-filter-count" id="count-all">0</span></button>
+        <button class="admin-filter active" data-filter="pending">Pending <span class="admin-filter-count" id="count-pending">0</span></button>
         <button class="admin-filter" data-filter="accepted">Accepted <span class="admin-filter-count" id="count-accepted">0</span></button>
         <button class="admin-filter" data-filter="denied">Denied <span class="admin-filter-count" id="count-denied">0</span></button>
       </div>
@@ -151,7 +151,7 @@ const REQUIREMENTS = [
 const REQS_BY_KEY = Object.fromEntries(REQUIREMENTS.map(r => [r.key, r]));
 
 let allApps = [];
-let currentFilter = 'all';
+let currentFilter = 'pending';
 let searchQuery = '';
 
 function fmtNum(n) { return Number(n).toLocaleString('en-US'); }
@@ -215,6 +215,60 @@ function renderStats(stats) {
 
 function renderAdminCard(app) {
   const noteValue = app.staff_notes || '';
+  const isPending = app.status === 'pending';
+
+  // Reviewed date for decided apps
+  const reviewedDate = app.reviewed_at ? fmtDate(app.reviewed_at) : '';
+
+  if (!isPending) {
+    // Compact collapsed card for decided applications
+    return `
+      <div class="app-card admin-app-card admin-app-compact" data-id="${app.id}" data-status="${app.status}">
+        <details class="admin-compact-details">
+          <summary class="admin-compact-summary">
+            <div class="app-card-meta">
+              <div class="app-card-ign">${escapeHtml(app.ign)}</div>
+              <div class="app-card-date">
+                Submitted ${fmtDate(app.created_at)}${reviewedDate ? ` · Reviewed ${reviewedDate}` : ''}
+              </div>
+            </div>
+            ${statusBadge(app.status)}
+          </summary>
+
+          <div class="admin-compact-expand">
+            ${app.staff_notes ? `
+              <div class="app-card-notes ${app.status === 'denied' ? 'app-card-notes-denied' : 'app-card-notes-accepted'}" style="margin-bottom:16px;">
+                <div class="app-card-notes-label">${app.status === 'denied' ? 'Denial Reason:' : 'Note from Staff:'}</div>
+                ${escapeHtml(app.staff_notes)}
+              </div>` : ''}
+
+            <div class="app-card-body" style="padding-top:0;">
+              <div class="app-card-field"><div class="app-card-label">Discord</div>${escapeHtml(app.discord)}</div>
+              <div class="app-card-field"><div class="app-card-label">Timezone</div>${escapeHtml(app.timezone)}</div>
+              ${app.previous_guilds ? `<div class="app-card-field"><div class="app-card-label">Previous Guilds</div>${escapeHtml(app.previous_guilds)}</div>` : ''}
+              ${app.main_gamemodes ? `<div class="app-card-field"><div class="app-card-label">Main Gamemodes</div>${escapeHtml(app.main_gamemodes)}</div>` : ''}
+              ${app.karma_link ? `<div class="app-card-field"><div class="app-card-label">25karma</div><a href="${escapeHtml(app.karma_link)}" target="_blank" rel="noopener">${escapeHtml(app.karma_link)}</a></div>` : ''}
+              ${app.additional_info ? `<div class="app-card-field"><div class="app-card-label">Additional Info</div>${escapeHtml(app.additional_info)}</div>` : ''}
+              <div class="app-card-field"><div class="app-card-label">Stats Submitted</div><div class="app-stats-list">${renderStats(app.stats)}</div></div>
+            </div>
+
+            <div class="admin-review-section">
+              <label class="admin-review-label" for="notes-${app.id}">Review Notes <span style="color:#6b5d53; font-weight:normal; letter-spacing:0.5px; text-transform:none;">(optional, visible to applicant)</span></label>
+              <textarea id="notes-${app.id}" class="admin-review-notes" rows="2" placeholder="Write a message for the applicant...">${escapeHtml(noteValue)}</textarea>
+              <div class="admin-actions">
+                <button class="admin-btn admin-btn-accept" data-action="accept" data-id="${app.id}">✓ Accept</button>
+                <button class="admin-btn admin-btn-deny" data-action="deny" data-id="${app.id}">✕ Deny</button>
+                <button class="admin-btn admin-btn-pending" data-action="pending" data-id="${app.id}">↺ Reset to Pending</button>
+                <button class="admin-btn admin-btn-delete" data-action="delete" data-id="${app.id}">🗑 Hide</button>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    `;
+  }
+
+  // Pending = fully expanded as before
   return `
     <div class="app-card admin-app-card" data-id="${app.id}" data-status="${app.status}">
       <div class="app-card-header">
