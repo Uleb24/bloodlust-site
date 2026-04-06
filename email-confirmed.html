@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Email Confirmed | The Blood Lust</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav-bar">
+  <a href="index.html" class="nav-brand">Blood Lust</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="stats.html">Stats</a></li>
+    <li><a href="members.html">Members</a></li>
+    <li><a href="apply.html">Apply</a></li>
+    <li><a href="contact.html">Contact Us</a></li>
+  </ul>
+  <a id="auth-icon" class="auth-icon" href="login.html" title="Log In">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+      <circle cx="12" cy="7" r="4"></circle>
+    </svg>
+  </a>
+</nav>
+
+<article class="article">
+  <div class="confirm-hero">
+    <div class="confirm-check">
+      <svg viewBox="0 0 24 24" width="80" height="80" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+    </div>
+    <div class="article-eyebrow">Welcome to the Guild</div>
+    <h1 class="article-title"><span>Email Confirmed</span></h1>
+    <p class="confirm-subtitle">Your account is now active. The Blood Lust welcomes you.</p>
+  </div>
+
+  <div class="confirm-unlocks">
+    <h2 class="confirm-unlocks-title">What you've unlocked</h2>
+    <div class="confirm-unlocks-grid">
+      <a href="users.html" class="confirm-unlock-card">
+        <div class="confirm-unlock-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </div>
+        <div class="confirm-unlock-title">Users Directory</div>
+        <div class="confirm-unlock-desc">Browse every member of the site and see who's online right now.</div>
+      </a>
+
+      <a href="profile.html" class="confirm-unlock-card">
+        <div class="confirm-unlock-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+        <div class="confirm-unlock-title">Your Profile</div>
+        <div class="confirm-unlock-desc">Customize your public profile with an avatar, bio, goals, and achievements.</div>
+      </a>
+
+      <a href="apply.html" class="confirm-unlock-card">
+        <div class="confirm-unlock-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+        </div>
+        <div class="confirm-unlock-title">Apply to Join</div>
+        <div class="confirm-unlock-desc">Submit your Hypixel stats and apply to become a Blood Lust member.</div>
+      </a>
+
+      <a href="dashboard.html" class="confirm-unlock-card">
+        <div class="confirm-unlock-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+        </div>
+        <div class="confirm-unlock-title">Dashboard</div>
+        <div class="confirm-unlock-desc">Track your application status and spin the Grind Wheel to pick your next challenge.</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="confirm-cta-area">
+    <a href="login.html" class="submit-button confirm-cta-btn">Log In to Get Started →</a>
+    <p class="confirm-cta-hint">Use the email and password you just signed up with.</p>
+  </div>
+</article>
+
+<footer class="site-footer">
+  <div class="footer-brand">The <strong>Blood Lust</strong> Guild</div>
+  <div class="footer-tagline">Hypixel Network</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<script src="presence.js"></script>
+</body>
+</html>
