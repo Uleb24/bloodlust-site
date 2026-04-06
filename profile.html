@@ -16,6 +16,7 @@
     <li><a href="stats.html">Stats</a></li>
     <li><a href="members.html">Members</a></li>
     <li><a href="apply.html">Apply</a></li>
+    <li><a href="users.html">Users</a></li>
     <li><a href="contact.html">Contact Us</a></li>
   </ul>
   <a id="auth-icon" class="auth-icon" href="login.html" title="Log In">
@@ -117,10 +118,17 @@
         <label>Goals</label>
         <div id="goals-list" class="goals-list"></div>
         <div class="goals-add-row">
-          <input type="text" id="goal-new-input" placeholder="Add a new goal..." maxlength="120">
+          <input type="text" id="goal-new-input" placeholder="Goal description (e.g. Reach Expert title)" maxlength="120">
+          <input type="number" id="goal-new-target" placeholder="Target (e.g. 30000)" min="0" step="any">
           <button type="button" id="goal-add-btn" class="admin-btn admin-btn-role-member">+ Add</button>
         </div>
-        <div class="field-hint">Track what you're working towards. Click the circle to mark done.</div>
+        <div class="field-hint">Each goal has a numeric target (e.g. "30000 score"). Update your current progress to track how close you are. When you reach your target, click "Mark as Achievement" to make it permanent.</div>
+      </div>
+
+      <div class="form-group">
+        <label>Achievements</label>
+        <div id="achievements-list" class="achievements-list"></div>
+        <div class="field-hint">⚠️ Completed goals are permanently saved here and displayed on your public profile. They cannot be edited or removed.</div>
       </div>
 
       <div id="profile-save-msg" class="auth-error" style="display:none;"></div>
@@ -144,6 +152,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="auth.js"></script>
+<script src="presence.js"></script>
 <script>
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
@@ -205,29 +214,54 @@ function flagEmoji(code) {
 }
 
 let currentGoals = [];
+let currentAchievements = [];
+
+function colorForProgress(current, target) {
+  if (!target || target <= 0) return 'goal-red';
+  const pct = (current / target) * 100;
+  if (pct >= 100) return 'goal-done';
+  if (pct >= 67) return 'goal-green';
+  if (pct >= 34) return 'goal-yellow';
+  return 'goal-red';
+}
+
+function escapeText(s) {
+  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 function renderGoals() {
   const list = document.getElementById('goals-list');
   if (currentGoals.length === 0) {
-    list.innerHTML = '<div style="color:#6b5d53; font-style:italic; font-size:13px; padding:8px 0;">No goals yet. Add one below.</div>';
+    list.innerHTML = '<div style="color:#6b5d53; font-style:italic; font-size:13px; padding:8px 0;">No active goals. Add one below.</div>';
     return;
   }
-  list.innerHTML = currentGoals.map((g, i) => `
-    <div class="goal-row ${g.done ? 'goal-done' : ''}">
-      <button type="button" class="goal-toggle" data-idx="${i}" aria-label="Toggle done">
-        ${g.done ? '✓' : '◯'}
-      </button>
-      <span class="goal-text">${(g.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
-      <button type="button" class="goal-delete" data-idx="${i}" aria-label="Delete">✕</button>
-    </div>
-  `).join('');
-  list.querySelectorAll('.goal-toggle').forEach(b => {
-    b.addEventListener('click', () => {
-      const i = parseInt(b.dataset.idx);
-      currentGoals[i].done = !currentGoals[i].done;
-      renderGoals();
-    });
-  });
+  list.innerHTML = currentGoals.map((g, i) => {
+    const target = Number(g.target) || 0;
+    const current = Number(g.current) || 0;
+    const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
+    const colorCls = colorForProgress(current, target);
+    const canComplete = target > 0 && current >= target;
+    return `
+      <div class="goal-row ${colorCls}">
+        <div class="goal-row-main">
+          <span class="goal-text">${escapeText(g.text)}</span>
+          <button type="button" class="goal-delete" data-idx="${i}" aria-label="Delete goal">✕</button>
+        </div>
+        <div class="goal-progress-row">
+          <input type="number" class="goal-num-input" data-idx="${i}" data-field="current" value="${current}" min="0" step="any" placeholder="current">
+          <span class="goal-progress-sep">/</span>
+          <input type="number" class="goal-num-input" data-idx="${i}" data-field="target" value="${target || ''}" min="0" step="any" placeholder="target">
+          <span class="goal-pct">${pct}%</span>
+        </div>
+        <div class="goal-progress-bar">
+          <div class="goal-progress-fill ${colorCls}" style="width:${pct}%;"></div>
+        </div>
+        ${canComplete ? `<button type="button" class="goal-complete-btn" data-idx="${i}">✓ Mark as Achievement</button>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  // Delete buttons
   list.querySelectorAll('.goal-delete').forEach(b => {
     b.addEventListener('click', () => {
       const i = parseInt(b.dataset.idx);
@@ -235,6 +269,70 @@ function renderGoals() {
       renderGoals();
     });
   });
+
+  // Numeric inputs (current + target)
+  list.querySelectorAll('.goal-num-input').forEach(inp => {
+    inp.addEventListener('input', (e) => {
+      const i = parseInt(e.target.dataset.idx);
+      const field = e.target.dataset.field;
+      const val = parseFloat(e.target.value);
+      currentGoals[i][field] = isNaN(val) ? 0 : val;
+      renderGoals();
+    });
+  });
+
+  // Complete buttons — manual, with strong warning
+  list.querySelectorAll('.goal-complete-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      const i = parseInt(b.dataset.idx);
+      const g = currentGoals[i];
+      const confirmed = confirm(
+        `⚠️ PERMANENT ACTION\n\nMark this goal as an Achievement?\n\n"${g.text}"\n\nOnce moved to achievements, it CANNOT be removed or edited. This is a permanent entry on your public profile.\n\nContinue?`
+      );
+      if (!confirmed) return;
+      currentAchievements.unshift({
+        text: g.text,
+        achieved_at: new Date().toISOString()
+      });
+      currentGoals.splice(i, 1);
+      renderGoals();
+      renderAchievements();
+      showAchievementToast(g.text);
+    });
+  });
+}
+
+function renderAchievements() {
+  const list = document.getElementById('achievements-list');
+  if (!list) return;
+  if (currentAchievements.length === 0) {
+    list.innerHTML = '<div style="color:#6b5d53; font-style:italic; font-size:13px; padding:8px 0;">No achievements yet. Complete a goal to earn one.</div>';
+    return;
+  }
+  list.innerHTML = currentAchievements.map((a) => {
+    const date = a.achieved_at ? new Date(a.achieved_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+    return `
+      <div class="achievement-row">
+        <span class="achievement-icon">★</span>
+        <div class="achievement-body">
+          <div class="achievement-text">${escapeText(a.text)}</div>
+          ${date ? `<div class="achievement-date">${date}</div>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function showAchievementToast(text) {
+  const toast = document.createElement('div');
+  toast.className = 'achievement-toast';
+  toast.innerHTML = `<div class="achievement-toast-icon">🎉</div><div><div class="achievement-toast-title">Goal Achieved!</div><div class="achievement-toast-text">${escapeText(text)}</div></div>`;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.add('show'), 10);
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 400);
+  }, 3000);
 }
 
 function populateCountrySelect(selected) {
@@ -269,7 +367,30 @@ async function initProfile() {
     document.getElementById('profile-karma').value = profile.karma_link || '';
     populateCountrySelect(profile.country_code || '');
     currentGoals = Array.isArray(profile.goals) ? profile.goals : [];
+    currentAchievements = Array.isArray(profile.achievements) ? profile.achievements : [];
+    // Migrate old goals: ensure target/current shape, move old done/100% to achievements
+    const stillActive = [];
+    currentGoals.forEach(g => {
+      if (g.done === true) {
+        currentAchievements.push({
+          text: g.text,
+          achieved_at: g.achieved_at || new Date().toISOString()
+        });
+        return;
+      }
+      // Migrate from old slider-based shape (progress 0-100)
+      if (g.target === undefined && g.current === undefined) {
+        g.target = 100;
+        g.current = typeof g.progress === 'number' ? g.progress : 0;
+        delete g.progress;
+      }
+      if (typeof g.current !== 'number') g.current = 0;
+      if (typeof g.target !== 'number') g.target = 0;
+      stillActive.push(g);
+    });
+    currentGoals = stillActive;
     renderGoals();
+    renderAchievements();
     setAvatarPreview(profile.avatar_url);
 
     // Update "view public profile" link
@@ -285,6 +406,7 @@ async function initProfile() {
   } else {
     populateCountrySelect('');
     renderGoals();
+    renderAchievements();
   }
 
   // Wire up avatar buttons
@@ -302,15 +424,27 @@ async function initProfile() {
 }
 
 function addGoal() {
-  const input = document.getElementById('goal-new-input');
-  const text = input.value.trim();
-  if (!text) return;
-  if (currentGoals.length >= 20) {
-    alert('Maximum 20 goals.');
+  const textInput = document.getElementById('goal-new-input');
+  const targetInput = document.getElementById('goal-new-target');
+  const text = textInput.value.trim();
+  const target = parseFloat(targetInput.value);
+  if (!text) {
+    alert('Please enter a goal description.');
+    textInput.focus();
     return;
   }
-  currentGoals.push({ text, done: false });
-  input.value = '';
+  if (isNaN(target) || target <= 0) {
+    alert('Please enter a numeric target greater than 0.');
+    targetInput.focus();
+    return;
+  }
+  if (currentGoals.length >= 20) {
+    alert('Maximum 20 active goals.');
+    return;
+  }
+  currentGoals.push({ text, target, current: 0 });
+  textInput.value = '';
+  targetInput.value = '';
   renderGoals();
 }
 
@@ -494,6 +628,8 @@ async function saveProfile(e) {
       country_code: document.getElementById('profile-country').value || null,
       karma_link: document.getElementById('profile-karma').value.trim() || null,
       goals: currentGoals,
+      achievements: currentAchievements,
+      achievements: currentAchievements,
     })
     .eq('id', user.id);
 

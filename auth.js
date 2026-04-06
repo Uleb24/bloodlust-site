@@ -110,6 +110,12 @@ async function updateAuthUI() {
       navLinks.appendChild(updatesLi);
     }
 
+    // Add Users link (everyone logged in)
+    const usersLi = document.createElement('li');
+    usersLi.className = 'nav-auth-item';
+    usersLi.innerHTML = '<a href="users.html">Users</a>';
+    navLinks.appendChild(usersLi);
+
     // Add Dashboard link
     const dashLi = document.createElement('li');
     dashLi.className = 'nav-auth-item';

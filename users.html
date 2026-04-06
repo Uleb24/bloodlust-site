@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Users | The Blood Lust</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav-bar">
+  <a href="index.html" class="nav-brand">Blood Lust</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="stats.html">Stats</a></li>
+    <li><a href="members.html">Members</a></li>
+    <li><a href="apply.html">Apply</a></li>
+    <li><a href="contact.html">Contact Us</a></li>
+  </ul>
+  <a id="auth-icon" class="auth-icon" href="login.html" title="Log In">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+      <circle cx="12" cy="7" r="4"></circle>
+    </svg>
+  </a>
+</nav>
+
+<article class="article">
+  <header class="article-header">
+    <div class="article-eyebrow">Site Members</div>
+    <h1 class="article-title"><span>Users</span></h1>
+    <p class="members-hint">Browse everyone with an account. Click a card to view their profile.</p>
+  </header>
+
+  <div class="users-controls">
+    <input type="text" id="users-search" class="member-search-input" placeholder="Search by username..." autocomplete="off">
+    <div class="users-filter-tabs">
+      <button class="users-filter-tab active" data-filter="all">All <span class="admin-filter-count" id="ucount-all">0</span></button>
+      <button class="users-filter-tab" data-filter="staff">Staff <span class="admin-filter-count" id="ucount-staff">0</span></button>
+      <button class="users-filter-tab" data-filter="member">Members <span class="admin-filter-count" id="ucount-member">0</span></button>
+      <button class="users-filter-tab" data-filter="player">Players <span class="admin-filter-count" id="ucount-player">0</span></button>
+    </div>
+  </div>
+
+  <div id="users-loading" style="color:#8b7c6f; font-style:italic; padding:40px 0; text-align:center;">Loading users...</div>
+  <div id="users-grid" class="users-grid" style="display:none;"></div>
+  <div id="users-empty" style="display:none; text-align:center; padding:40px 20px; color:#8b7c6f; font-style:italic;">No users match your search.</div>
+</article>
+
+<footer class="site-footer">
+  <div class="footer-brand">The <strong>Blood Lust</strong> Guild</div>
+  <div class="footer-tagline">Hypixel Network</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<script src="presence.js"></script>
+<script>
+const OWNER_ID = '6c7d5f18-025e-4b8f-b2e9-a639a02ab624';
+
+let allUsers = [];
+let onlineIds = new Set();
+let currentFilter = 'all';
+let searchQ = '';
+let directoryChannel = null;
+
+function flagEmoji(code) {
+  if (!code || code.length !== 2) return '';
+  const cc = code.toUpperCase();
+  const A = 0x1F1E6;
+  return String.fromCodePoint(A + cc.charCodeAt(0) - 65) + String.fromCodePoint(A + cc.charCodeAt(1) - 65);
+}
+
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
+    .replaceAll('"','&quot;').replaceAll("'",'&#39;');
+}
+
+function renderUserCard(u) {
+  const ign = u.ign || '(no name)';
+  const isOnline = onlineIds.has(u.id);
+  const flag = u.country_code ? flagEmoji(u.country_code) : '';
+
+  let roleTag = '';
+  let avatarCls = 'user-card-avatar-player';
+  if (u.role === 'staff') { roleTag = '<span class="user-card-badge user-card-badge-staff">Staff</span>'; avatarCls = 'user-card-avatar-staff'; }
+  else if (u.role === 'member') { roleTag = '<span class="user-card-badge user-card-badge-member">Member</span>'; avatarCls = 'user-card-avatar-member'; }
+  else { roleTag = '<span class="user-card-badge user-card-badge-player">Player</span>'; }
+
+  const avatarHtml = u.avatar_url
+    ? `<div class="user-card-avatar ${avatarCls}"><img src="${escapeHtml(u.avatar_url)}" alt=""></div>`
+    : `<div class="user-card-avatar user-card-avatar-default ${avatarCls}">
+         <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+           <circle cx="12" cy="7" r="4"></circle>
+         </svg>
+       </div>`;
+
+  const statusLine = u.custom_status
+    ? `<div class="user-card-status">"${escapeHtml(u.custom_status)}"</div>`
+    : '';
+
+  return `
+    <a href="profile-view.html?u=${encodeURIComponent(ign)}" class="user-card">
+      <div class="user-card-avatar-wrap">
+        ${avatarHtml}
+        <div class="user-card-presence ${isOnline ? 'user-card-presence-online' : ''}" title="${isOnline ? 'Online' : 'Offline'}"></div>
+      </div>
+      <div class="user-card-info">
+        <div class="user-card-name">${flag ? flag + ' ' : ''}${escapeHtml(ign)}</div>
+        ${roleTag}
+        ${statusLine}
+      </div>
+    </a>
+  `;
+}
+
+function updateCounts() {
+  document.getElementById('ucount-all').textContent = allUsers.length;
+  document.getElementById('ucount-staff').textContent = allUsers.filter(u => u.role === 'staff').length;
+  document.getElementById('ucount-member').textContent = allUsers.filter(u => u.role === 'member').length;
+  document.getElementById('ucount-player').textContent = allUsers.filter(u => u.role === 'player').length;
+}
+
+function renderGrid() {
+  let filtered = allUsers;
+  if (currentFilter !== 'all') {
+    filtered = filtered.filter(u => u.role === currentFilter);
+  }
+  if (searchQ) {
+    const q = searchQ.toLowerCase();
+    filtered = filtered.filter(u => (u.ign || '').toLowerCase().includes(q));
+  }
+
+  // Sort: owner first, online first, then staff -> member -> player alphabetical
+  const roleOrder = { staff: 0, member: 1, player: 2 };
+  filtered.sort((a, b) => {
+    if (a.id === OWNER_ID) return -1;
+    if (b.id === OWNER_ID) return 1;
+    const ao = onlineIds.has(a.id) ? 0 : 1;
+    const bo = onlineIds.has(b.id) ? 0 : 1;
+    if (ao !== bo) return ao - bo;
+    const ar = roleOrder[a.role] ?? 3;
+    const br = roleOrder[b.role] ?? 3;
+    if (ar !== br) return ar - br;
+    return (a.ign || '').localeCompare(b.ign || '');
+  });
+
+  const grid = document.getElementById('users-grid');
+  const empty = document.getElementById('users-empty');
+
+  if (filtered.length === 0) {
+    grid.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  grid.style.display = 'grid';
+  grid.innerHTML = filtered.map(renderUserCard).join('');
+}
+
+async function loadUsers() {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, ign, avatar_url, role, country_code, custom_status, created_at')
+    .not('ign', 'is', null);
+
+  document.getElementById('users-loading').style.display = 'none';
+
+  if (error) {
+    const grid = document.getElementById('users-grid');
+    grid.innerHTML = '<div class="auth-error">Failed to load users.</div>';
+    grid.style.display = 'block';
+    return;
+  }
+
+  allUsers = data || [];
+  updateCounts();
+  renderGrid();
+}
+
+// Join presence channel (read-only) to know who's online
+function initDirectoryPresence() {
+  directoryChannel = supabase.channel('online-users');
+  directoryChannel
+    .on('presence', { event: 'sync' }, () => {
+      const state = directoryChannel.presenceState();
+      onlineIds = new Set(Object.keys(state));
+      renderGrid();
+    })
+    .subscribe();
+}
+
+async function init() {
+  await loadUsers();
+  initDirectoryPresence();
+
+  document.getElementById('users-search').addEventListener('input', (e) => {
+    searchQ = e.target.value.trim();
+    renderGrid();
+  });
+
+  document.querySelectorAll('.users-filter-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.users-filter-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      renderGrid();
+    });
+  });
+}
+
+init();
+
+window.addEventListener('beforeunload', () => {
+  if (directoryChannel) supabase.removeChannel(directoryChannel);
+});
+</script>
+
+</body>
+</html>

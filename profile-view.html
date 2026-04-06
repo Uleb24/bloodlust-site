@@ -26,66 +26,55 @@
   </a>
 </nav>
 
-<article class="article">
-  <div id="profile-loading" style="color:#8b7c6f; font-style:italic; padding:40px 0; text-align:center;">Loading profile...</div>
-  <div id="profile-error" style="display:none; padding:40px 20px; text-align:center;">
+<article class="article pub-profile-article">
+  <div id="profile-loading" style="color:#8b7c6f; font-style:italic; padding:80px 0; text-align:center;">Loading profile...</div>
+  <div id="profile-error" style="display:none; padding:80px 20px; text-align:center;">
     <h1 class="article-title"><span>Not Found</span></h1>
     <p style="color:#b8b0a8; margin-top:20px;">We couldn't find a profile with that username.</p>
-    <p style="margin-top:30px;"><a href="members.html" class="submit-button" style="display:inline-block; text-decoration:none;">Back to Members</a></p>
+    <p style="margin-top:30px;"><a href="users.html" class="submit-button" style="display:inline-block; text-decoration:none;">Browse All Users</a></p>
   </div>
+
   <div id="profile-view" style="display:none;">
-    <div class="pub-profile-header">
-      <div class="pub-profile-avatar-wrapper">
-        <div class="pub-profile-avatar" id="pub-avatar">
-          <svg viewBox="0 0 24 24" width="80" height="80" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
+    <!-- Hero header -->
+    <div class="pub-hero">
+      <div class="pub-hero-bg"></div>
+      <div class="pub-hero-content">
+        <div class="pub-hero-avatar-wrapper">
+          <div class="pub-hero-avatar" id="pub-avatar">
+            <svg viewBox="0 0 24 24" width="96" height="96" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div class="pub-hero-dot" id="pub-presence-dot" title="Offline"></div>
         </div>
-        <div class="pub-profile-presence-dot" id="pub-presence-dot" title="Offline"></div>
-      </div>
-      <div class="pub-profile-header-info">
-        <h1 class="pub-profile-ign" id="pub-ign">—</h1>
-        <div class="pub-profile-badges" id="pub-badges"></div>
-        <div class="pub-profile-status" id="pub-status" style="display:none;"></div>
-      </div>
-    </div>
-
-    <div class="pub-profile-grid">
-      <div class="pub-profile-card" id="pub-bio-card" style="display:none;">
-        <div class="pub-profile-card-label">Bio</div>
-        <div class="pub-profile-card-value" id="pub-bio"></div>
-      </div>
-
-      <div class="pub-profile-card" id="pub-favorite-card" style="display:none;">
-        <div class="pub-profile-card-label">Favorite Gamemodes</div>
-        <div class="pub-profile-card-value" id="pub-favorite"></div>
-      </div>
-
-      <div class="pub-profile-card" id="pub-discord-card" style="display:none;">
-        <div class="pub-profile-card-label">Discord</div>
-        <div class="pub-profile-card-value" id="pub-discord"></div>
-      </div>
-
-      <div class="pub-profile-card" id="pub-timezone-card" style="display:none;">
-        <div class="pub-profile-card-label">Timezone</div>
-        <div class="pub-profile-card-value" id="pub-timezone"></div>
-      </div>
-
-      <div class="pub-profile-card" id="pub-joined-card">
-        <div class="pub-profile-card-label">Member Since</div>
-        <div class="pub-profile-card-value" id="pub-joined"></div>
-      </div>
-
-      <div class="pub-profile-card" id="pub-karma-card" style="display:none;">
-        <div class="pub-profile-card-label">Hypixel Stats</div>
-        <div class="pub-profile-card-value"><a id="pub-karma" href="#" target="_blank" rel="noopener">View on 25karma →</a></div>
+        <div class="pub-hero-info">
+          <div class="pub-hero-badges" id="pub-badges"></div>
+          <h1 class="pub-hero-ign" id="pub-ign">—</h1>
+          <div class="pub-hero-status" id="pub-status" style="display:none;"></div>
+          <div class="pub-hero-meta" id="pub-meta"></div>
+        </div>
       </div>
     </div>
 
-    <div id="pub-goals-section" style="display:none;">
-      <h2 class="section-heading">Goals</h2>
-      <div id="pub-goals-list" class="pub-goals-list"></div>
+    <!-- Info section: bio + favorite in rows -->
+    <div id="pub-info-rows" class="pub-info-rows"></div>
+
+    <!-- Active goals -->
+    <div id="pub-goals-section" class="pub-section" style="display:none;">
+      <h2 class="pub-section-title">Active Goals</h2>
+      <div id="pub-goals-list" class="pub-goals-grid"></div>
+    </div>
+
+    <!-- Achievements -->
+    <div id="pub-achievements-section" class="pub-section" style="display:none;">
+      <h2 class="pub-section-title">Achievements</h2>
+      <div id="pub-achievements-list" class="pub-achievements-grid"></div>
+    </div>
+
+    <!-- 25karma link (if set) -->
+    <div id="pub-karma-row" class="pub-karma-row" style="display:none;">
+      <a id="pub-karma-link" href="#" target="_blank" rel="noopener" class="pub-karma-btn">View Full Stats on 25karma →</a>
     </div>
   </div>
 </article>
@@ -98,8 +87,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="auth.js"></script>
+<script src="presence.js"></script>
 <script>
-// Country code → flag emoji
 function flagEmoji(code) {
   if (!code || code.length !== 2) return '';
   const cc = code.toUpperCase();
@@ -118,6 +107,23 @@ function fmtDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
 }
 
+function fmtFullDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function progressColor(current, target) {
+  if (!target || target <= 0) return 'pub-goal-red';
+  const pct = (current / target) * 100;
+  if (pct >= 67) return 'pub-goal-green';
+  if (pct >= 34) return 'pub-goal-yellow';
+  return 'pub-goal-red';
+}
+
+function fmtNum(n) {
+  return Number(n).toLocaleString('en-US');
+}
+
 async function init() {
   const params = new URLSearchParams(window.location.search);
   const username = params.get('u');
@@ -127,7 +133,6 @@ async function init() {
     return;
   }
 
-  // Look up the profile by IGN (case-insensitive)
   const { data: profile, error } = await supabase
     .from('profiles')
     .select('*')
@@ -140,7 +145,6 @@ async function init() {
   }
 
   renderProfile(profile);
-  // Check presence after render
   checkPresence(profile.id);
 }
 
@@ -160,16 +164,7 @@ function renderProfile(p) {
   if (p.avatar_url) {
     avatarEl.innerHTML = `<img src="${escapePub(p.avatar_url)}" alt="">`;
   }
-  avatarEl.classList.add(`pub-avatar-${p.role}`);
-
-  // Name + country flag
-  const ignEl = document.getElementById('pub-ign');
-  let ignDisplay = escapePub(p.ign || '(no name)');
-  if (p.country_code) {
-    const flag = flagEmoji(p.country_code);
-    if (flag) ignDisplay = `${flag} ${ignDisplay}`;
-  }
-  ignEl.innerHTML = ignDisplay;
+  avatarEl.classList.add(`pub-hero-avatar-${p.role}`);
 
   // Role badges
   const badges = document.getElementById('pub-badges');
@@ -179,6 +174,9 @@ function renderProfile(p) {
   else if (p.role === 'member') { roleLabel = 'Member'; roleClass = 'pub-badge-member'; }
   badges.innerHTML = `<span class="pub-badge ${roleClass}">${roleLabel}</span>`;
 
+  // Name (no inline flag here — flag goes in meta row)
+  document.getElementById('pub-ign').textContent = p.ign || '(no name)';
+
   // Custom status
   if (p.custom_status) {
     const statusEl = document.getElementById('pub-status');
@@ -186,73 +184,103 @@ function renderProfile(p) {
     statusEl.style.display = 'block';
   }
 
-  // Info cards
+  // Meta row: country + member since
+  const metaParts = [];
+  if (p.country_code) {
+    const flag = flagEmoji(p.country_code);
+    if (flag) metaParts.push(`<span class="pub-meta-item">${flag} ${escapePub(p.country_code.toUpperCase())}</span>`);
+  }
+  metaParts.push(`<span class="pub-meta-item"><span class="pub-meta-icon">◆</span> Member since ${fmtDate(p.created_at)}</span>`);
+  document.getElementById('pub-meta').innerHTML = metaParts.join('');
+
+  // Info rows: bio + favorite gamemodes
+  const infoRows = [];
   if (p.bio) {
-    document.getElementById('pub-bio').textContent = p.bio;
-    document.getElementById('pub-bio-card').style.display = '';
+    infoRows.push(`
+      <div class="pub-info-row">
+        <div class="pub-info-label">Bio</div>
+        <div class="pub-info-value">${escapePub(p.bio)}</div>
+      </div>
+    `);
   }
   if (p.favorite_gamemodes) {
-    document.getElementById('pub-favorite').textContent = p.favorite_gamemodes;
-    document.getElementById('pub-favorite-card').style.display = '';
+    infoRows.push(`
+      <div class="pub-info-row">
+        <div class="pub-info-label">Favorite Gamemodes</div>
+        <div class="pub-info-value">${escapePub(p.favorite_gamemodes)}</div>
+      </div>
+    `);
   }
-  if (p.discord) {
-    document.getElementById('pub-discord').textContent = p.discord;
-    document.getElementById('pub-discord-card').style.display = '';
-  }
-  if (p.timezone) {
-    document.getElementById('pub-timezone').textContent = p.timezone;
-    document.getElementById('pub-timezone-card').style.display = '';
-  }
-  document.getElementById('pub-joined').textContent = fmtDate(p.created_at);
+  document.getElementById('pub-info-rows').innerHTML = infoRows.join('');
 
-  if (p.karma_link) {
-    const karmaEl = document.getElementById('pub-karma');
-    karmaEl.href = p.karma_link;
-    document.getElementById('pub-karma-card').style.display = '';
-  }
-
-  // Goals
+  // Active goals (incomplete) — shown in red for incomplete per request, but colored by progress
   const goals = Array.isArray(p.goals) ? p.goals : [];
   if (goals.length > 0) {
-    document.getElementById('pub-goals-section').style.display = '';
+    document.getElementById('pub-goals-section').style.display = 'block';
     const listEl = document.getElementById('pub-goals-list');
     listEl.innerHTML = goals.map(g => {
-      const done = g.done ? 'pub-goal-done' : '';
-      const icon = g.done ? '✓' : '◯';
-      return `<div class="pub-goal ${done}">
-        <span class="pub-goal-icon">${icon}</span>
-        <span class="pub-goal-text">${escapePub(g.text || '')}</span>
-      </div>`;
+      const target = Number(g.target) || 0;
+      const current = Number(g.current) || 0;
+      const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
+      const colorCls = progressColor(current, target);
+      return `
+        <div class="pub-goal-card ${colorCls}">
+          <div class="pub-goal-header">
+            <div class="pub-goal-text">${escapePub(g.text || '')}</div>
+            <div class="pub-goal-pct">${pct}%</div>
+          </div>
+          <div class="pub-goal-bar">
+            <div class="pub-goal-fill ${colorCls}" style="width:${pct}%;"></div>
+          </div>
+          <div class="pub-goal-numbers">${fmtNum(current)} / ${fmtNum(target)}</div>
+        </div>
+      `;
     }).join('');
+  }
+
+  // Achievements (permanent)
+  const achievements = Array.isArray(p.achievements) ? p.achievements : [];
+  if (achievements.length > 0) {
+    document.getElementById('pub-achievements-section').style.display = 'block';
+    const listEl = document.getElementById('pub-achievements-list');
+    listEl.innerHTML = achievements.map(a => {
+      const date = a.achieved_at ? fmtFullDate(a.achieved_at) : '';
+      return `
+        <div class="pub-achievement-card">
+          <div class="pub-achievement-icon">★</div>
+          <div class="pub-achievement-body">
+            <div class="pub-achievement-text">${escapePub(a.text || '')}</div>
+            ${date ? `<div class="pub-achievement-date">${date}</div>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // 25karma link
+  if (p.karma_link) {
+    document.getElementById('pub-karma-link').href = p.karma_link;
+    document.getElementById('pub-karma-row').style.display = 'block';
   }
 }
 
-// Check if this user is currently online via Supabase Realtime presence
+// Check presence via Realtime
 async function checkPresence(targetUserId) {
   try {
-    // Join the presence channel read-only
     const channel = supabase.channel('online-users');
-
     channel.on('presence', { event: 'sync' }, () => {
       const state = channel.presenceState();
       const isOnline = Object.keys(state).includes(targetUserId);
       const dotEl = document.getElementById('pub-presence-dot');
-      if (isOnline) {
-        dotEl.classList.add('pub-presence-dot-online');
-        dotEl.title = 'Online now';
-      } else {
-        dotEl.classList.add('pub-presence-dot-offline');
-        dotEl.title = 'Offline';
-      }
+      dotEl.classList.remove('pub-hero-dot-online', 'pub-hero-dot-offline');
+      dotEl.classList.add(isOnline ? 'pub-hero-dot-online' : 'pub-hero-dot-offline');
+      dotEl.title = isOnline ? 'Online now' : 'Offline';
     }).subscribe();
 
-    // Unsubscribe after a few seconds (we just need the initial sync)
-    setTimeout(() => {
-      supabase.removeChannel(channel);
-    }, 5000);
+    setTimeout(() => { supabase.removeChannel(channel); }, 6000);
   } catch (e) {
     console.warn('Presence check failed:', e);
-    document.getElementById('pub-presence-dot').classList.add('pub-presence-dot-offline');
+    document.getElementById('pub-presence-dot').classList.add('pub-hero-dot-offline');
   }
 }
 

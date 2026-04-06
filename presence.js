@@ -1,10 +1,13 @@
 // ============================================
-// PRESENCE SIDEBAR - shows who's online
+// PRESENCE - tracks who's online site-wide
 // ============================================
-// Uses Supabase Realtime Presence. Only visible to members and staff.
-// Owner appears at the very top, then staff, then members (alpha within each).
+// - TRACKS presence for any logged-in user on any page
+// - RENDERS the sidebar only on certain pages for members/staff
 
 const OWNER_UUID = '6c7d5f18-025e-4b8f-b2e9-a639a02ab624';
+
+// Pages where the sidebar should be rendered (for members/staff)
+const PRESENCE_PAGES = ['dashboard.html', 'changelogs.html', 'guild-updates.html', 'admin.html'];
 
 (function() {
   let presenceChannel = null;
@@ -13,44 +16,50 @@ const OWNER_UUID = '6c7d5f18-025e-4b8f-b2e9-a639a02ab624';
   let profileCache = {}; // userId -> profile
 
   async function initPresence() {
-    // Check auth
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     currentUser = user;
 
-    // Check role - only members and staff get the sidebar
     const { data: profile } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .single();
-    if (!profile || (profile.role !== 'member' && profile.role !== 'staff')) return;
+    if (!profile) return;
     currentProfile = profile;
     profileCache[user.id] = profile;
 
-    // Build the sidebar
-    buildSidebar();
+    // Decide if this page should render the sidebar
+    const path = window.location.pathname;
+    const onPresencePage = PRESENCE_PAGES.some(p => path.endsWith('/' + p) || path.endsWith(p));
+    const isMemberOrStaff = profile.role === 'member' || profile.role === 'staff';
+    const shouldRenderSidebar = onPresencePage && isMemberOrStaff;
 
-    // Connect to presence channel
+    if (shouldRenderSidebar) {
+      buildSidebar();
+    }
+
+    // ALWAYS connect to the presence channel, regardless of page or role.
+    // This way players on the homepage also count as online.
     presenceChannel = supabase.channel('online-users', {
       config: { presence: { key: user.id } }
     });
 
     presenceChannel
       .on('presence', { event: 'sync' }, async () => {
-        await handlePresenceSync();
+        if (shouldRenderSidebar) await handlePresenceSync();
       })
       .on('presence', { event: 'join' }, async () => {
-        await handlePresenceSync();
+        if (shouldRenderSidebar) await handlePresenceSync();
       })
       .on('presence', { event: 'leave' }, async () => {
-        await handlePresenceSync();
+        if (shouldRenderSidebar) await handlePresenceSync();
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          // Announce ourselves
           await presenceChannel.track({
             user_id: user.id,
+            role: profile.role,
             online_at: new Date().toISOString()
           });
         }
@@ -60,10 +69,8 @@ const OWNER_UUID = '6c7d5f18-025e-4b8f-b2e9-a639a02ab624';
   async function handlePresenceSync() {
     if (!presenceChannel) return;
     const state = presenceChannel.presenceState();
-    // state is { userId: [{ user_id, online_at }, ...], ... }
     const onlineUserIds = Object.keys(state);
 
-    // Fetch any profiles we don't have cached
     const missingIds = onlineUserIds.filter(id => !profileCache[id]);
     if (missingIds.length > 0) {
       const { data: profiles } = await supabase
@@ -114,7 +121,6 @@ const OWNER_UUID = '6c7d5f18-025e-4b8f-b2e9-a639a02ab624';
     });
     closeBtn.addEventListener('click', () => panel.classList.remove('open'));
 
-    // Close when clicking outside
     document.addEventListener('click', (e) => {
       if (panel.classList.contains('open')
           && !panel.contains(e.target)
@@ -129,12 +135,10 @@ const OWNER_UUID = '6c7d5f18-025e-4b8f-b2e9-a639a02ab624';
     const countEl = document.getElementById('presence-count');
     if (!listEl || !countEl) return;
 
-    // Filter to users we have profiles for (should be all of them after sync)
+    // Show ALL online users regardless of role
     const onlineProfiles = onlineUserIds
       .map(id => profileCache[id])
-      .filter(Boolean)
-      // Only show members and staff (sanity filter)
-      .filter(p => p.role === 'member' || p.role === 'staff');
+      .filter(Boolean);
 
     countEl.textContent = onlineProfiles.length;
 
@@ -143,13 +147,12 @@ const OWNER_UUID = '6c7d5f18-025e-4b8f-b2e9-a639a02ab624';
       return;
     }
 
-    // Sort: owner first, then staff (alpha), then members (alpha)
+    const roleOrder = { staff: 0, member: 1, player: 2 };
     onlineProfiles.sort((a, b) => {
       if (a.id === OWNER_UUID) return -1;
       if (b.id === OWNER_UUID) return 1;
-      const roleOrder = { staff: 0, member: 1 };
-      const ar = roleOrder[a.role] ?? 2;
-      const br = roleOrder[b.role] ?? 2;
+      const ar = roleOrder[a.role] ?? 3;
+      const br = roleOrder[b.role] ?? 3;
       if (ar !== br) return ar - br;
       return (a.ign || '').localeCompare(b.ign || '');
     });
@@ -166,20 +169,25 @@ const OWNER_UUID = '6c7d5f18-025e-4b8f-b2e9-a639a02ab624';
   function renderPresenceRow(p) {
     const ign = p.ign || '(no name)';
     const isStaff = p.role === 'staff';
+    const isMember = p.role === 'member';
     const isMe = p.id === currentUser.id;
 
+    let avatarClass = 'presence-avatar-player';
+    if (isStaff) avatarClass = 'presence-avatar-staff';
+    else if (isMember) avatarClass = 'presence-avatar-member';
+
     const avatarHtml = p.avatar_url
-      ? `<div class="presence-avatar ${isStaff ? 'presence-avatar-staff' : 'presence-avatar-member'}"><img src="${escapePres(p.avatar_url)}" alt=""></div>`
-      : `<div class="presence-avatar presence-avatar-default ${isStaff ? 'presence-avatar-staff' : 'presence-avatar-member'}">
+      ? `<div class="presence-avatar ${avatarClass}"><img src="${escapePres(p.avatar_url)}" alt=""></div>`
+      : `<div class="presence-avatar presence-avatar-default ${avatarClass}">
            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
              <circle cx="12" cy="7" r="4"></circle>
            </svg>
          </div>`;
 
-    const roleTag = isStaff
-      ? '<span class="presence-role presence-role-staff">Staff</span>'
-      : '<span class="presence-role presence-role-member">Member</span>';
+    let roleTag = '<span class="presence-role presence-role-player">Player</span>';
+    if (isStaff) roleTag = '<span class="presence-role presence-role-staff">Staff</span>';
+    else if (isMember) roleTag = '<span class="presence-role presence-role-member">Member</span>';
 
     return `
       <div class="presence-row ${isMe ? 'presence-row-me' : ''}">
@@ -193,7 +201,6 @@ const OWNER_UUID = '6c7d5f18-025e-4b8f-b2e9-a639a02ab624';
     `;
   }
 
-  // Cleanup on page unload
   window.addEventListener('beforeunload', () => {
     if (presenceChannel) {
       presenceChannel.untrack();
@@ -201,9 +208,7 @@ const OWNER_UUID = '6c7d5f18-025e-4b8f-b2e9-a639a02ab624';
     }
   });
 
-  // Start once the page is ready and supabase is available
   if (typeof supabase !== 'undefined') {
-    // Delay slightly so auth.js can update UI first
     setTimeout(initPresence, 400);
   }
 })();
