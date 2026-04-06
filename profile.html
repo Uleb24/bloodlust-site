@@ -317,36 +317,87 @@ function renderGoals() {
     });
   });
 
-  // Numeric inputs (current + target)
+  // Numeric inputs (current + target) — update data + visuals in place, no re-render
   list.querySelectorAll('.goal-num-input').forEach(inp => {
     inp.addEventListener('input', (e) => {
       const i = parseInt(e.target.dataset.idx);
       const field = e.target.dataset.field;
-      const val = parseFloat(e.target.value);
+      // Allow empty string while typing without clobbering to 0
+      const raw = e.target.value;
+      const val = raw === '' ? 0 : parseFloat(raw);
       currentGoals[i][field] = isNaN(val) ? 0 : val;
-      renderGoals();
+
+      // Update this row's visuals in place (no full re-render, preserves focus)
+      const row = e.target.closest('.goal-row');
+      if (!row) return;
+      const g = currentGoals[i];
+      const pct = goalProgress(g);
+      const colorCls = colorForPct(pct);
+
+      // Swap row color class
+      row.classList.remove('goal-red', 'goal-yellow', 'goal-green', 'goal-done');
+      row.classList.add(colorCls);
+
+      // Update the % label
+      const pctEl = row.querySelector('.goal-pct');
+      if (pctEl) {
+        pctEl.textContent = fmtPct(pct);
+        pctEl.classList.remove('goal-red', 'goal-yellow', 'goal-green', 'goal-done');
+        pctEl.classList.add(colorCls);
+      }
+
+      // Update the progress bar fill
+      const fill = row.querySelector('.goal-progress-fill');
+      if (fill) {
+        fill.style.width = pct + '%';
+        fill.classList.remove('goal-red', 'goal-yellow', 'goal-green', 'goal-done');
+        fill.classList.add(colorCls);
+      }
+
+      // Show/hide the "Mark as Achievement" button
+      const target = Number(g.target) || 0;
+      const current = Number(g.current) || 0;
+      const canComplete = target > 0 && current >= target;
+      let completeBtn = row.querySelector('.goal-complete-btn');
+      if (canComplete && !completeBtn) {
+        // Add the button
+        completeBtn = document.createElement('button');
+        completeBtn.type = 'button';
+        completeBtn.className = 'goal-complete-btn';
+        completeBtn.dataset.idx = i;
+        completeBtn.textContent = '✓ Mark as Achievement';
+        row.appendChild(completeBtn);
+        completeBtn.addEventListener('click', () => handleCompleteClick(i));
+      } else if (!canComplete && completeBtn) {
+        completeBtn.remove();
+      }
     });
   });
 
-  // Complete buttons
+  // Complete buttons (initial wiring for rows rendered with the button)
   list.querySelectorAll('.goal-complete-btn').forEach(b => {
     b.addEventListener('click', () => {
       const i = parseInt(b.dataset.idx);
-      const g = currentGoals[i];
-      const confirmed = confirm(
-        `⚠️ PERMANENT ACTION\n\nMark this goal as an Achievement?\n\n"${g.text}"\n\nOnce moved to achievements, it CANNOT be removed or edited. This is a permanent entry on your public profile.\n\nContinue?`
-      );
-      if (!confirmed) return;
-      currentAchievements.unshift({
-        text: g.text,
-        achieved_at: new Date().toISOString()
-      });
-      currentGoals.splice(i, 1);
-      renderGoals();
-      renderAchievements();
-      showAchievementToast(g.text);
+      handleCompleteClick(i);
     });
   });
+}
+
+function handleCompleteClick(i) {
+  const g = currentGoals[i];
+  if (!g) return;
+  const confirmed = confirm(
+    `⚠️ PERMANENT ACTION\n\nMark this goal as an Achievement?\n\n"${g.text}"\n\nOnce moved to achievements, it CANNOT be removed or edited. This is a permanent entry on your public profile.\n\nContinue?`
+  );
+  if (!confirmed) return;
+  currentAchievements.unshift({
+    text: g.text,
+    achieved_at: new Date().toISOString()
+  });
+  currentGoals.splice(i, 1);
+  renderGoals();
+  renderAchievements();
+  showAchievementToast(g.text);
 }
 
 function renderAchievements() {
