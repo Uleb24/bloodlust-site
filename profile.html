@@ -291,15 +291,18 @@ function renderGoals() {
 
         <div class="goal-edit-row">
           <div class="goal-edit-field">
+            <label class="goal-edit-label">Starting From</label>
+            <input type="number" class="goal-num-input" data-idx="${i}" data-field="start" value="${start === 0 ? '' : start}" placeholder="0" min="0" step="any">
+          </div>
+          <div class="goal-edit-field">
             <label class="goal-edit-label">Current</label>
-            <input type="number" class="goal-num-input" data-idx="${i}" data-field="current" value="${current}" min="0" step="any">
+            <input type="number" class="goal-num-input" data-idx="${i}" data-field="current" value="${current === 0 ? '' : current}" placeholder="0" min="0" step="any">
           </div>
           <div class="goal-edit-sep">/</div>
           <div class="goal-edit-field">
             <label class="goal-edit-label">Target</label>
-            <input type="number" class="goal-num-input" data-idx="${i}" data-field="target" value="${target}" min="0" step="any">
+            <input type="number" class="goal-num-input" data-idx="${i}" data-field="target" value="${target === 0 ? '' : target}" placeholder="0" min="0" step="any">
           </div>
-          <div class="goal-edit-start">Starting from <strong>${fmtNum(start)}</strong></div>
         </div>
 
         ${canComplete ? `<button type="button" class="goal-complete-btn" data-idx="${i}">✓ Mark as Achievement</button>` : ''}
@@ -533,12 +536,14 @@ async function initProfile() {
     currentAchievements = Array.isArray(profile.achievements) ? profile.achievements : [];
     // Migrate old goals: ensure start/target/current shape
     const stillActive = [];
+    let didMigrate = false;
     currentGoals.forEach(g => {
       if (g.done === true) {
         currentAchievements.push({
           text: g.text,
           achieved_at: g.achieved_at || new Date().toISOString()
         });
+        didMigrate = true;
         return;
       }
       // Migrate from old slider-based shape (progress 0-100)
@@ -546,14 +551,33 @@ async function initProfile() {
         g.target = 100;
         g.current = typeof g.progress === 'number' ? g.progress : 0;
         delete g.progress;
+        didMigrate = true;
       }
       if (typeof g.current !== 'number') g.current = 0;
       if (typeof g.target !== 'number') g.target = 0;
-      // If start is missing (existing goals before Option C), set start = 0 to preserve old behavior
-      if (typeof g.start !== 'number') g.start = 0;
+      // One-time migration: if this goal was made before `start` existed
+      // (or start was 0 from the old migration), reset start to current value
+      // so progress % reflects from now on, not from 0.
+      if (g._startMigrated !== true) {
+        g.start = g.current;
+        g._startMigrated = true;
+        didMigrate = true;
+      }
       stillActive.push(g);
     });
     currentGoals = stillActive;
+
+    // If we migrated anything, save it back to the database silently
+    if (didMigrate) {
+      supabase
+        .from('profiles')
+        .update({ goals: currentGoals, achievements: currentAchievements })
+        .eq('id', user.id)
+        .then(({ error }) => {
+          if (error) console.warn('Goal migration save failed:', error);
+        });
+    }
+
     renderGoals();
     renderAchievements();
     setAvatarPreview(profile.avatar_url);
