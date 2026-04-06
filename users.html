@@ -46,6 +46,9 @@
   <div id="users-loading" style="color:#8b7c6f; font-style:italic; padding:40px 0; text-align:center;">Loading users...</div>
   <div id="users-grid" class="users-grid" style="display:none;"></div>
   <div id="users-empty" style="display:none; text-align:center; padding:40px 20px; color:#8b7c6f; font-style:italic;">No users match your search.</div>
+  <div id="users-load-more-wrap" style="display:none; text-align:center; padding:30px 0 60px;">
+    <button type="button" id="users-load-more-btn" class="users-load-more-btn">Show more</button>
+  </div>
 </article>
 
 <footer class="site-footer">
@@ -59,11 +62,13 @@
 <script src="presence.js"></script>
 <script>
 const OWNER_ID = '6c7d5f18-025e-4b8f-b2e9-a639a02ab624';
+const PAGE_SIZE = 30;
 
 let allUsers = [];
 let onlineIds = new Set();
 let currentFilter = 'all';
 let searchQ = '';
+let visibleCount = PAGE_SIZE;
 
 function flagEmoji(code) {
   if (!code || code.length !== 2) return '';
@@ -90,7 +95,7 @@ function renderUserCard(u) {
   else { roleTag = '<span class="user-card-badge user-card-badge-player">Player</span>'; }
 
   const avatarHtml = u.avatar_url
-    ? `<div class="user-card-avatar ${avatarCls}"><img src="${escapeHtml(u.avatar_url)}" alt=""></div>`
+    ? `<div class="user-card-avatar ${avatarCls}"><img src="${escapeHtml(u.avatar_url)}" alt="" loading="lazy" decoding="async"></div>`
     : `<div class="user-card-avatar user-card-avatar-default ${avatarCls}">
          <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -150,16 +155,34 @@ function renderGrid() {
 
   const grid = document.getElementById('users-grid');
   const empty = document.getElementById('users-empty');
+  const loadMoreWrap = document.getElementById('users-load-more-wrap');
 
   if (filtered.length === 0) {
     grid.style.display = 'none';
+    if (loadMoreWrap) loadMoreWrap.style.display = 'none';
     empty.style.display = 'block';
     return;
   }
 
   empty.style.display = 'none';
   grid.style.display = 'grid';
-  grid.innerHTML = filtered.map(renderUserCard).join('');
+
+  // Clamp visibleCount to filtered length
+  const renderCount = Math.min(visibleCount, filtered.length);
+  const visible = filtered.slice(0, renderCount);
+  grid.innerHTML = visible.map(renderUserCard).join('');
+
+  // Show/hide "Load more" button
+  if (loadMoreWrap) {
+    if (filtered.length > renderCount) {
+      loadMoreWrap.style.display = 'block';
+      const btn = document.getElementById('users-load-more-btn');
+      const remaining = filtered.length - renderCount;
+      if (btn) btn.textContent = `Show ${Math.min(PAGE_SIZE, remaining)} more (${remaining} remaining)`;
+    } else {
+      loadMoreWrap.style.display = 'none';
+    }
+  }
 }
 
 async function loadUsers() {
@@ -196,6 +219,7 @@ async function init() {
 
   document.getElementById('users-search').addEventListener('input', (e) => {
     searchQ = e.target.value.trim();
+    visibleCount = PAGE_SIZE; // reset paging when search changes
     renderGrid();
   });
 
@@ -204,9 +228,19 @@ async function init() {
       document.querySelectorAll('.users-filter-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentFilter = btn.dataset.filter;
+      visibleCount = PAGE_SIZE; // reset paging when filter changes
       renderGrid();
     });
   });
+
+  // Wire up Load more button
+  const loadMoreBtn = document.getElementById('users-load-more-btn');
+  if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', () => {
+      visibleCount += PAGE_SIZE;
+      renderGrid();
+    });
+  }
 }
 
 init();

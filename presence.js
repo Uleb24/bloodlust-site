@@ -203,7 +203,7 @@ window.BloodLustPresence = (function() {
     else if (isMember) avatarClass = 'presence-avatar-member';
 
     const avatarHtml = p.avatar_url
-      ? `<div class="presence-avatar ${avatarClass}"><img src="${escapePres(p.avatar_url)}" alt=""></div>`
+      ? `<div class="presence-avatar ${avatarClass}"><img src="${escapePres(p.avatar_url)}" alt="" loading="lazy" decoding="async"></div>`
       : `<div class="presence-avatar presence-avatar-default ${avatarClass}">
            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>

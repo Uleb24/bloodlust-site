@@ -4705,3 +4705,25 @@ details[open] > .admin-compact-summary::after {
   .confirm-unlocks-title { font-size: 20px; }
   .confirm-cta-btn { padding: 16px 28px; font-size: 14px; width: 100%; box-sizing: border-box; }
 }
+
+/* Load more button for users directory */
+.users-load-more-btn {
+  padding: 14px 36px;
+  background: linear-gradient(135deg, rgba(139, 0, 0, 0.4), rgba(234, 88, 12, 0.2));
+  border: 1px solid #ea580c;
+  color: #ff6b35;
+  font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.users-load-more-btn:hover {
+  background: linear-gradient(135deg, rgba(139, 0, 0, 0.6), rgba(234, 88, 12, 0.35));
+  color: #fff;
+  box-shadow: 0 0 18px rgba(234, 88, 12, 0.4);
+  transform: translateY(-1px);
+}

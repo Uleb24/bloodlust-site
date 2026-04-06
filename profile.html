@@ -803,6 +803,68 @@ function addGoal() {
   renderGoals();
 }
 
+// Resize an image file client-side to a max dimension, preserving aspect ratio.
+// GIFs are returned as-is (canvas would lose animation).
+// Returns { blob, ext, contentType } for upload.
+async function resizeAvatarImage(file) {
+  // GIFs: skip resize to preserve animation
+  if (file.type === 'image/gif') {
+    return { blob: file, ext: 'gif', contentType: 'image/gif' };
+  }
+
+  const MAX_DIM = 400;
+  const JPEG_QUALITY = 0.88;
+
+  // Load the file into an Image element
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+
+  const img = await new Promise((resolve, reject) => {
+    const im = new Image();
+    im.onload = () => resolve(im);
+    im.onerror = () => reject(new Error('Failed to load image'));
+    im.src = dataUrl;
+  });
+
+  // Compute target dimensions (preserve aspect ratio, cap at MAX_DIM)
+  let { width, height } = img;
+  if (width > MAX_DIM || height > MAX_DIM) {
+    if (width > height) {
+      height = Math.round(height * (MAX_DIM / width));
+      width = MAX_DIM;
+    } else {
+      width = Math.round(width * (MAX_DIM / height));
+      height = MAX_DIM;
+    }
+  }
+
+  // Draw to canvas
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, width, height);
+
+  // Output format: PNG for originals with transparency, JPEG otherwise (smaller)
+  const hasAlpha = file.type === 'image/png' || file.type === 'image/webp';
+  const outType = hasAlpha ? 'image/png' : 'image/jpeg';
+  const outExt = hasAlpha ? 'png' : 'jpg';
+
+  const blob = await new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (b) => b ? resolve(b) : reject(new Error('Canvas toBlob failed')),
+      outType,
+      outType === 'image/jpeg' ? JPEG_QUALITY : undefined
+    );
+  });
+
+  return { blob, ext: outExt, contentType: outType };
+}
+
 async function handleAvatarUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -821,16 +883,29 @@ async function handleAvatarUpload(e) {
 
   const uploadBtn = document.getElementById('avatar-upload-btn');
   uploadBtn.disabled = true;
+  uploadBtn.textContent = 'Processing...';
+
+  // Resize the image client-side to save bandwidth (skipped for GIFs)
+  let resized;
+  try {
+    resized = await resizeAvatarImage(file);
+  } catch (err) {
+    console.error('Resize failed, falling back to original:', err);
+    // Fallback: upload original file unchanged
+    const origExt = file.name.split('.').pop().toLowerCase();
+    resized = { blob: file, ext: origExt, contentType: file.type };
+  }
+
   uploadBtn.textContent = 'Uploading...';
 
   // File path: avatars/{user_id}/avatar.{ext}
-  const ext = file.name.split('.').pop().toLowerCase();
+  const ext = resized.ext;
   const filePath = `${currentUserId}/avatar.${ext}`;
 
   // Upload (upsert so it replaces any existing file)
   const { error: uploadError } = await supabase.storage
     .from('avatars')
-    .upload(filePath, file, { upsert: true, contentType: file.type });
+    .upload(filePath, resized.blob, { upsert: true, contentType: resized.contentType });
 
   if (uploadError) {
     console.error('Full upload error:', uploadError);
