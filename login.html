@@ -204,7 +204,20 @@ async function handleAuth(e) {
 
   try {
     if (mode === 'signup') {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      // Pass the username as user_metadata so it's saved on the auth user too.
+      // This way Supabase's Auth dashboard shows the IGN alongside the email,
+      // and it's available as the display name / username at the auth level.
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username: username,
+            ign: username,
+            display_name: username
+          }
+        }
+      });
       if (error) throw error;
 
       // Save the username to the profile
