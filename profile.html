@@ -626,10 +626,16 @@ async function initProfile() {
       document.getElementById('view-public-profile-link').href = 'profile-view.html?u=' + encodeURIComponent(profile.ign);
     }
 
-    // Show welcome banner if profile is incomplete (no IGN set)
-    if (!profile.ign) {
+    // Show welcome banner if profile is incomplete (no IGN set) OR if redirected here from email confirmation
+    const urlParams = new URLSearchParams(window.location.search);
+    const justConfirmed = urlParams.get('welcome') === '1';
+    if (!profile.ign || justConfirmed) {
       const banner = document.getElementById('welcome-banner');
       if (banner) banner.style.display = 'block';
+      // Clean up the URL so refresh doesn't re-show the banner forever
+      if (justConfirmed && window.history && window.history.replaceState) {
+        window.history.replaceState({}, '', 'profile.html');
+      }
     }
   } else {
     populateCountrySelect('');
