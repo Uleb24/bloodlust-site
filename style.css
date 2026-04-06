@@ -3144,6 +3144,17 @@ details[open] > .admin-compact-summary::after {
   border-color: #AAAAAA !important;
 }
 
+#post-cancel-btn {
+  color: #AAAAAA !important;
+  border-color: rgba(170, 170, 170, 0.4) !important;
+}
+
+#post-cancel-btn:hover {
+  color: #e8e2dd !important;
+  background: rgba(170, 170, 170, 0.12) !important;
+  border-color: #AAAAAA !important;
+}
+
 /* =========== RESPONSIVE =========== */
 @media (max-width: 900px) {
   .nav-bar { padding: 16px 20px; flex-direction: column; gap: 14px; }
