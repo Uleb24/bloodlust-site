@@ -33,6 +33,11 @@
     <p class="members-hint">Click any name to view their stats on 25karma.</p>
   </header>
 
+  <div class="member-search-wrapper">
+    <input type="text" id="member-search" class="member-search-input" placeholder="Search members by name..." autocomplete="off">
+    <div id="member-search-count" class="member-search-count"></div>
+  </div>
+
   <section class="role-section">
     <h2 class="role-heading">Guild Master <span class="role-count">1</span></h2>
     
@@ -126,7 +131,7 @@
   </section>
 
   <section class="role-section">
-    <h2 class="role-heading">Members <span class="role-count">66</span></h2>
+    <h2 class="role-heading">Members <span class="role-count">67</span></h2>
     
     <div class="mc-list">
       <a href="https://25karma.xyz/player/asapvpeing" target="_blank" rel="noopener" class="mc-row"><span class="mc-rank mc-mvp-text">[MVP</span><span class="plus plus-dblue">+</span><span class="mc-mvp-text">]</span><span class="mc-name">asapvpeing</span></a>
@@ -194,6 +199,7 @@
       <a href="https://25karma.xyz/player/Temly" target="_blank" rel="noopener" class="mc-row"><span class="mc-rank mc-mvpp-text">[MVP</span><span class="plus plus-black">++</span><span class="mc-mvpp-text">]</span><span class="mc-name">Temly</span></a>
       <a href="https://25karma.xyz/player/icors" target="_blank" rel="noopener" class="mc-row"><span class="mc-rank mc-mvpp-text">[MVP</span><span class="plus plus-black">++</span><span class="mc-mvpp-text">]</span><span class="mc-name">icors</span></a>
       <a href="https://25karma.xyz/player/Kixa" target="_blank" rel="noopener" class="mc-row"><span class="mc-rank mc-mvp-text">[MVP</span><span class="plus plus-black">+</span><span class="mc-mvp-text">]</span><span class="mc-name">Kixa</span></a>
+      <a href="https://25karma.xyz/player/GTB_MARTYR" target="_blank" rel="noopener" class="mc-row"><span class="mc-rank mc-mvp-text">[MVP</span><span class="plus plus-black">+</span><span class="mc-mvp-text">]</span><span class="mc-name">GTB_MARTYR</span></a>
       <a href="https://25karma.xyz/player/phatban" target="_blank" rel="noopener" class="mc-row"><span class="mc-rank mc-mvp-text">[MVP</span><span class="plus plus-dred">+</span><span class="mc-mvp-text">]</span><span class="mc-name">phatban</span></a>
     </div>
   </section>
@@ -208,5 +214,59 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="auth.js"></script>
+<script>
+(function() {
+  const searchInput = document.getElementById('member-search');
+  const countEl = document.getElementById('member-search-count');
+  const allRows = document.querySelectorAll('.mc-row');
+  const allSections = document.querySelectorAll('.role-section');
+  const totalCount = allRows.length;
+
+  function updateSearch() {
+    const q = searchInput.value.trim().toLowerCase();
+
+    if (q === '') {
+      // Reset everything
+      allRows.forEach(r => r.style.display = '');
+      allSections.forEach(s => s.style.display = '');
+      countEl.textContent = '';
+      return;
+    }
+
+    let visibleCount = 0;
+    // Show/hide rows based on match
+    allRows.forEach(row => {
+      const name = row.querySelector('.mc-name').textContent.toLowerCase();
+      if (name.includes(q)) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    // Hide section headers that have no visible rows
+    allSections.forEach(section => {
+      const visibleInSection = section.querySelectorAll('.mc-row:not([style*="display: none"])').length;
+      section.style.display = visibleInSection > 0 ? '' : 'none';
+    });
+
+    countEl.textContent = visibleCount === 0
+      ? 'No members match your search.'
+      : `Showing ${visibleCount} of ${totalCount} members`;
+  }
+
+  searchInput.addEventListener('input', updateSearch);
+
+  // Allow Esc key to clear the search
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      searchInput.value = '';
+      updateSearch();
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
