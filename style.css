@@ -2383,6 +2383,107 @@ body {
   text-transform: uppercase;
 }
 
+/* =========== INDIVIDUAL LEADERBOARD CARDS =========== */
+.leaderboard-scroll {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 16px;
+  margin-bottom: 60px;
+  /* Fade edges to hint at scrollability */
+  mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+}
+
+.leaderboard-scroll:focus { outline: none; }
+
+.leaderboard-scroll::-webkit-scrollbar { height: 10px; }
+.leaderboard-scroll::-webkit-scrollbar-track { background: rgba(20, 14, 14, 0.6); }
+.leaderboard-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #8b0000, #ea580c);
+  border-radius: 2px;
+}
+.leaderboard-scroll::-webkit-scrollbar-thumb:hover { background: #f97316; }
+
+.leaderboard-scroll-inner {
+  display: flex;
+  gap: 16px;
+  padding: 4px 24px 4px 4px;
+  width: max-content;
+}
+
+.leaderboard-card {
+  flex: 0 0 320px;
+  background: rgba(20, 14, 14, 0.7);
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  border-left: 3px solid #ea580c;
+  padding: 18px 20px;
+  transition: all 0.2s ease;
+}
+
+.leaderboard-card:hover {
+  background: rgba(30, 18, 18, 0.8);
+  border-left-color: #f97316;
+  box-shadow: 0 0 18px rgba(234, 88, 12, 0.15);
+}
+
+.leaderboard-card-title {
+  font-family: 'Trebuchet MS', sans-serif;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #ff6b35;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(234, 88, 12, 0.25);
+}
+
+.leaderboard-card-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lb-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+  font-size: 13px;
+  padding: 6px 2px;
+  white-space: nowrap;
+}
+
+.lb-rank {
+  color: #f97316;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+  min-width: 28px;
+  text-align: right;
+}
+
+.lb-name {
+  color: #FFFFFF;
+  text-decoration: none;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.lb-name:hover { text-decoration: underline; }
+
+.lb-value {
+  color: #b8b0a8;
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 700px) {
+  .leaderboard-card { flex: 0 0 280px; padding: 16px; }
+}
+
 /* =========== GUILD POSTS =========== */
 .post-card {
   margin-bottom: 24px;
