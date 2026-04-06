@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -35,40 +34,44 @@
 
   <form class="apply-form login-form" id="auth-form" onsubmit="return handleAuth(event)">
 
-```
-<div class="form-group">
-  <label for="email">Email</label>
-  <input type="email" id="email" name="email" required autocomplete="email">
-</div>
+    <div class="form-group" id="username-group" style="display:none;">
+      <label for="username">Minecraft Username</label>
+      <input type="text" id="username" name="username" minlength="3" maxlength="16" autocomplete="username" placeholder="Your in-game name">
+      <div class="field-hint">3-16 characters, letters/numbers/underscores only</div>
+    </div>
 
-<div class="form-group">
-  <label for="password">Password</label>
-  <div class="password-wrapper">
-    <input type="password" id="password" name="password" required minlength="6" autocomplete="current-password">
-    <button type="button" class="password-toggle" id="password-toggle" aria-label="Show password" tabindex="-1">
-      <svg class="password-eye-show" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-        <circle cx="12" cy="12" r="3"></circle>
-      </svg>
-      <svg class="password-eye-hide" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
-        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-        <line x1="1" y1="1" x2="23" y2="23"></line>
-      </svg>
-    </button>
-  </div>
-  <div class="password-hint" id="password-hint" style="display:none;">At least 6 characters</div>
-</div>
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required autocomplete="email">
+    </div>
 
-<div class="auth-error" id="auth-error" style="display:none;"></div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <div class="password-wrapper">
+        <input type="password" id="password" name="password" required minlength="6" autocomplete="current-password">
+        <button type="button" class="password-toggle" id="password-toggle" aria-label="Show password" tabindex="-1">
+          <svg class="password-eye-show" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          <svg class="password-eye-hide" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+            <line x1="1" y1="1" x2="23" y2="23"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="password-hint" id="password-hint" style="display:none;">At least 6 characters</div>
+    </div>
 
-<div class="form-submit-area">
-  <button type="submit" class="submit-button" id="auth-submit">Log In</button>
-  <div class="auth-toggle">
-    <span id="auth-toggle-text">Don't have an account?</span>
-    <a href="#" id="auth-toggle-link">Sign up</a>
-  </div>
-</div>
-```
+    <div class="auth-error" id="auth-error" style="display:none;"></div>
+
+    <div class="form-submit-area">
+      <button type="submit" class="submit-button" id="auth-submit">Log In</button>
+      <div class="auth-toggle">
+        <span id="auth-toggle-text">Don't have an account?</span>
+        <a href="#" id="auth-toggle-link">Sign up</a>
+      </div>
+    </div>
 
   </form>
 
@@ -80,11 +83,8 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script src="config.js"></script>
-
 <script src="auth.js"></script>
-
 <script>
 let mode = 'login'; // or 'signup'
 
@@ -105,6 +105,8 @@ const passwordHint = document.getElementById('password-hint');
 toggleLinkEl.addEventListener('click', (e) => {
   e.preventDefault();
   mode = (mode === 'login') ? 'signup' : 'login';
+  const usernameGroup = document.getElementById('username-group');
+  const usernameInput = document.getElementById('username');
   if (mode === 'signup') {
     titleEl.textContent = 'Sign Up';
     eyebrowEl.textContent = 'Join The Site';
@@ -113,6 +115,8 @@ toggleLinkEl.addEventListener('click', (e) => {
     toggleLinkEl.textContent = 'Log in';
     passwordInput.autocomplete = 'new-password';
     passwordHint.style.display = 'block';
+    usernameGroup.style.display = 'block';
+    usernameInput.setAttribute('required', 'required');
   } else {
     titleEl.textContent = 'Log In';
     eyebrowEl.textContent = 'Members Area';
@@ -121,6 +125,8 @@ toggleLinkEl.addEventListener('click', (e) => {
     toggleLinkEl.textContent = 'Sign up';
     passwordInput.autocomplete = 'current-password';
     passwordHint.style.display = 'none';
+    usernameGroup.style.display = 'none';
+    usernameInput.removeAttribute('required');
   }
   errorEl.style.display = 'none';
 });
@@ -142,9 +148,54 @@ passwordToggle.addEventListener('click', () => {
 async function handleAuth(e) {
   e.preventDefault();
   errorEl.style.display = 'none';
+  errorEl.classList.remove('success');
 
   const email = document.getElementById('email').value.trim();
   const password = passwordInput.value;
+  const usernameInput = document.getElementById('username');
+  const username = usernameInput ? usernameInput.value.trim() : '';
+
+  // Signup-only validation on username
+  if (mode === 'signup') {
+    if (!username) {
+      errorEl.textContent = 'Please choose a Minecraft username.';
+      errorEl.style.display = 'block';
+      return false;
+    }
+    if (username.length < 3 || username.length > 16) {
+      errorEl.textContent = 'Username must be between 3 and 16 characters.';
+      errorEl.style.display = 'block';
+      return false;
+    }
+    if (!/^[A-Za-z0-9_]+$/.test(username)) {
+      errorEl.textContent = 'Username can only contain letters, numbers, and underscores.';
+      errorEl.style.display = 'block';
+      return false;
+    }
+
+    // Check uniqueness (case-insensitive)
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Checking username...';
+    const { data: existing, error: checkError } = await supabase
+      .from('profiles')
+      .select('id')
+      .ilike('ign', username)
+      .maybeSingle();
+    if (checkError && checkError.code !== 'PGRST116') {
+      errorEl.textContent = 'Could not verify username. Please try again.';
+      errorEl.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create Account';
+      return false;
+    }
+    if (existing) {
+      errorEl.textContent = 'That username is already taken. Please choose another.';
+      errorEl.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create Account';
+      return false;
+    }
+  }
 
   submitBtn.disabled = true;
   submitBtn.textContent = mode === 'signup' ? 'Creating...' : 'Logging in...';
@@ -153,10 +204,36 @@ async function handleAuth(e) {
     if (mode === 'signup') {
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
+
+      // Save the username to the profile
+      // Note: if email confirmation is required, the user is created but can't log in yet.
+      // The profiles row is created by a DB trigger on auth.users insert. That trigger is
+      // usually instant, but we retry once after a small delay just in case.
+      if (data.user) {
+        let profileError = null;
+        const tryUpdate = async () => {
+          const result = await supabase
+            .from('profiles')
+            .update({ ign: username })
+            .eq('id', data.user.id);
+          return result.error;
+        };
+
+        profileError = await tryUpdate();
+        if (profileError) {
+          // Wait a moment and retry once
+          await new Promise(r => setTimeout(r, 500));
+          profileError = await tryUpdate();
+        }
+        if (profileError) {
+          console.warn('Could not save username immediately:', profileError);
+          // Non-fatal — they can set it on profile page
+        }
+      }
+
       // If email confirmation is required, data.session will be null
       if (!data.session) {
         showSuccess('Please verify your email to continue. Check your inbox and click on the link sent by email to confirm your email address, then come back here to log in.');
-        // Clear the password field; leave email so they can see which one they used
         passwordInput.value = '';
       } else {
         window.location.href = returnPage;
