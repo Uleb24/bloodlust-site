@@ -577,6 +577,72 @@ function buildEmailBody(data) {
   return body;
 }
 
+// Build a Discord embed for an application and POST it to the webhook.
+// Stat status follows the same logic as the email body / live validation:
+// - "OUTSTANDING ★" if stat >= outstanding threshold
+// - "Normal ✓" if stat >= normal threshold
+// - "Below requirement" if stat is set but below normal
+// - Stats not entered are skipped entirely.
+async function fireApplicationWebhook(data) {
+  if (typeof DISCORD_APPLICATION_WEBHOOK !== 'string' || !DISCORD_APPLICATION_WEBHOOK) return;
+
+  const stats = data.stats || {};
+  const lines = [];
+  REQUIREMENTS.forEach(req => {
+    const raw = stats[req.key];
+    if (raw === undefined || raw === null || raw === '') return;
+    const num = Number(raw);
+    if (isNaN(num) || num <= 0) return;
+    const formatted = num.toLocaleString('en-US') + (req.unit ? ' ' + req.unit : '');
+    let status;
+    if (num >= req.outstanding) status = '🔥 **OUTSTANDING**';
+    else if (num >= req.normal) status = '✅ Normal';
+    else status = '❌ Below requirement';
+    lines.push(`**${req.name}** — ${formatted} (${status})`);
+  });
+
+  const statsBlock = lines.length > 0 ? lines.join('\n') : '_No stats provided._';
+
+  const fields = [
+    { name: 'IGN', value: data.ign || '_(none)_', inline: true },
+    { name: 'Discord', value: data.discord || '_(none)_', inline: true },
+    { name: 'Timezone', value: data.timezone || '_(none)_', inline: true },
+  ];
+  if (data.previous_guilds) fields.push({ name: 'Previous Guilds', value: data.previous_guilds.slice(0, 1024), inline: false });
+  if (data.main_gamemodes) fields.push({ name: 'Main Gamemodes', value: data.main_gamemodes.slice(0, 1024), inline: false });
+  if (data.karma_link) fields.push({ name: '25karma', value: data.karma_link.slice(0, 1024), inline: false });
+  if (data.additional_info) fields.push({ name: 'Additional Info', value: data.additional_info.slice(0, 1024), inline: false });
+
+  // Discord embed field values are capped at 1024 chars
+  fields.push({ name: 'Stats', value: statsBlock.slice(0, 1024), inline: false });
+
+  const embed = {
+    title: `🩸 New Application — ${data.ign || 'Unknown'}`,
+    color: 0xea580c, // Blood Lust orange
+    fields,
+    footer: { text: 'Submitted via The Blood Lust website' },
+    timestamp: new Date().toISOString(),
+    url: 'https://thebloodlust.vercel.app/admin.html'
+  };
+
+  try {
+    const res = await fetch(DISCORD_APPLICATION_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: 'Blood Lust Applications',
+        embeds: [embed]
+      })
+    });
+    if (!res.ok) {
+      console.warn('Discord webhook returned non-OK status:', res.status);
+    }
+  } catch (err) {
+    // Webhook failure is non-fatal — never block the user's submission
+    console.warn('Discord webhook failed (non-fatal):', err);
+  }
+}
+
 async function submitToDatabase(data) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Not logged in' };
@@ -607,6 +673,9 @@ function submitByEmail(data) {
     showOriginalThankYou();
     return;
   }
+
+  // Fire Discord webhook in parallel with Formspree (non-blocking)
+  fireApplicationWebhook(data);
 
   // Send via Formspree (async, no redirect)
   fetch(FORMSPREE_URL, {
@@ -661,6 +730,8 @@ async function submitApplication(e) {
       submitBtn.disabled = false;
       submitBtn.textContent = 'Submit Application';
     } else {
+      // Fire Discord webhook (non-blocking, failure is non-fatal)
+      fireApplicationWebhook(data);
       showDashboardThankYou();
     }
     return false;

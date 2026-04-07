@@ -795,8 +795,9 @@ function addGoal() {
     alert('Maximum 20 active goals.');
     return;
   }
-  // start = current at the moment of creation (Option C)
-  currentGoals.push({ text, start: current, current, target });
+  // start defaults to 0 (long-term goals make more sense from 0).
+  // Users can edit "Starting from" later if they want a different baseline.
+  currentGoals.push({ text, start: 0, current, target, _startMigrated: true });
   textInput.value = '';
   currentInput.value = '';
   targetInput.value = '';

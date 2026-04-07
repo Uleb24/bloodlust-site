@@ -27,3 +27,10 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // Create a top-level `supabase` variable bound to the client so inline scripts can use it.
 // (This works because it runs after the IIFE above has set window.supabase to the client.)
 var supabase = window.supabase;
+
+// ============================================
+// DISCORD WEBHOOKS
+// ============================================
+// Browser-side webhook URLs. Not secret — worst case is spam.
+// To rotate: regenerate the webhook in Discord, paste the new URL here, redeploy.
+const DISCORD_APPLICATION_WEBHOOK = 'https://discord.com/api/webhooks/1490972240223666266/JXRtgFbMd0uMYCBf8uHUXu8ht58bsASq9CjERswy8MieJP4rSK9hoHpWwFUz8CSZRK8I';
