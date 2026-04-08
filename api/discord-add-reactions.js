@@ -16,6 +16,9 @@
 const VOTE_UP = encodeURIComponent('👍');
 const VOTE_DOWN = encodeURIComponent('👎');
 
+// Simple delay helper
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
 async function addReaction(channelId, messageId, emojiEncoded, botToken) {
   const url = `https://discord.com/api/v10/channels/${channelId}/messages/${messageId}/reactions/${emojiEncoded}/@me`;
   const res = await fetch(url, {
@@ -28,7 +31,9 @@ async function addReaction(channelId, messageId, emojiEncoded, botToken) {
   if (!res.ok && res.status !== 204) {
     const text = await res.text();
     console.warn(`Failed to add reaction ${emojiEncoded}: ${res.status} ${text}`);
+    return false;
   }
+  return true;
 }
 
 export default async function handler(req, res) {
@@ -61,9 +66,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid ID format' });
   }
 
-  // Add both reactions (parallel, but sequentially would also work)
+  // Add both reactions sequentially with a small delay to avoid Discord's
+  // reaction rate limit (0.25s per-bot between reaction adds).
   try {
     await addReaction(channel_id, message_id, VOTE_UP, botToken);
+    await sleep(350);
     await addReaction(channel_id, message_id, VOTE_DOWN, botToken);
   } catch (err) {
     console.error('Failed to add reactions:', err);
