@@ -57,6 +57,8 @@ const REQUIREMENTS = [
 ];
 
 function buildEmbed(data, applicationId) {
+  const isExternal = !applicationId;
+
   const stats = data.stats || {};
   const lines = [];
   REQUIREMENTS.forEach(req => {
@@ -86,17 +88,31 @@ function buildEmbed(data, applicationId) {
   fields.push({ name: 'Stats', value: statsBlock.slice(0, 1024), inline: false });
 
   return {
-    title: `🩸 New Application — ${data.ign || 'Unknown'}`,
+    title: isExternal
+      ? `🩸 New Application (Email) — ${data.ign || 'Unknown'}`
+      : `🩸 New Application — ${data.ign || 'Unknown'}`,
     color: 0xea580c,
     fields,
-    footer: { text: 'Submitted via The Blood Lust website' },
+    footer: {
+      text: isExternal
+        ? 'Submitted via email — no website account. Buttons are cosmetic only.'
+        : 'Submitted via The Blood Lust website'
+    },
     timestamp: new Date().toISOString(),
     url: 'https://thebloodlust.vercel.app/admin.html'
   };
 }
 
 function buildButtons(applicationId) {
-  if (!applicationId) return [];
+  // Logged-in apps have a real UUID; external (email) apps use a sentinel "external" marker
+  // so the interaction endpoint knows to skip the database update.
+  const approveId = applicationId
+    ? `app_approve_${applicationId}`
+    : `app_approve_external`;
+  const denyId = applicationId
+    ? `app_deny_${applicationId}`
+    : `app_deny_external`;
+
   return [{
     type: 1, // action row
     components: [
@@ -105,14 +121,14 @@ function buildButtons(applicationId) {
         style: 3, // success (green)
         label: 'Approve',
         emoji: { name: '✅' },
-        custom_id: `app_approve_${applicationId}`
+        custom_id: approveId
       },
       {
         type: 2,
         style: 4, // danger (red)
         label: 'Deny',
         emoji: { name: '❌' },
-        custom_id: `app_deny_${applicationId}`
+        custom_id: denyId
       }
     ]
   }];
