@@ -577,109 +577,22 @@ function buildEmailBody(data) {
   return body;
 }
 
-// Build a Discord embed for an application and POST it to the webhook.
-// If applicationId is provided, attach Approve/Deny buttons tied to that ID.
-// After posting, call our /api/discord-add-reactions endpoint to add 👍 👎.
+// Build a Discord application post by calling our serverless endpoint
+// (which uses the bot token to post with buttons — regular webhooks can't do that).
 async function fireApplicationWebhook(data, applicationId) {
-  if (typeof DISCORD_APPLICATION_WEBHOOK !== 'string' || !DISCORD_APPLICATION_WEBHOOK) return;
-
-  const stats = data.stats || {};
-  const lines = [];
-  REQUIREMENTS.forEach(req => {
-    const raw = stats[req.key];
-    if (raw === undefined || raw === null || raw === '') return;
-    const num = Number(raw);
-    if (isNaN(num) || num <= 0) return;
-    const formatted = num.toLocaleString('en-US') + (req.unit ? ' ' + req.unit : '');
-    let status;
-    if (num >= req.outstanding) status = '🔥 **OUTSTANDING**';
-    else if (num >= req.normal) status = '✅ Normal';
-    else status = '❌ Below requirement';
-    lines.push(`**${req.name}** — ${formatted} (${status})`);
-  });
-
-  const statsBlock = lines.length > 0 ? lines.join('\n') : '_No stats provided._';
-
-  const fields = [
-    { name: 'IGN', value: data.ign || '_(none)_', inline: true },
-    { name: 'Discord', value: data.discord || '_(none)_', inline: true },
-    { name: 'Timezone', value: data.timezone || '_(none)_', inline: true },
-  ];
-  if (data.previous_guilds) fields.push({ name: 'Previous Guilds', value: data.previous_guilds.slice(0, 1024), inline: false });
-  if (data.main_gamemodes) fields.push({ name: 'Main Gamemodes', value: data.main_gamemodes.slice(0, 1024), inline: false });
-  if (data.karma_link) fields.push({ name: '25karma', value: data.karma_link.slice(0, 1024), inline: false });
-  if (data.additional_info) fields.push({ name: 'Additional Info', value: data.additional_info.slice(0, 1024), inline: false });
-
-  fields.push({ name: 'Stats', value: statsBlock.slice(0, 1024), inline: false });
-
-  const embed = {
-    title: `🩸 New Application — ${data.ign || 'Unknown'}`,
-    color: 0xea580c,
-    fields,
-    footer: { text: 'Submitted via The Blood Lust website' },
-    timestamp: new Date().toISOString(),
-    url: 'https://thebloodlust.vercel.app/admin.html'
-  };
-
-  // Build the payload. If we have an application ID, attach Approve/Deny buttons.
-  const payload = {
-    username: 'Blood Lust Applications',
-    embeds: [embed]
-  };
-
-  if (applicationId) {
-    payload.components = [
-      {
-        type: 1, // action row
-        components: [
-          {
-            type: 2, // button
-            style: 3, // success (green)
-            label: 'Approve',
-            emoji: { name: '✅' },
-            custom_id: `app_approve_${applicationId}`
-          },
-          {
-            type: 2,
-            style: 4, // danger (red)
-            label: 'Deny',
-            emoji: { name: '❌' },
-            custom_id: `app_deny_${applicationId}`
-          }
-        ]
-      }
-    ];
-  }
-
   try {
-    // wait=true makes Discord return the posted message (including ID + channel ID)
-    const webhookUrl = DISCORD_APPLICATION_WEBHOOK + '?wait=true';
-    const res = await fetch(webhookUrl, {
+    const res = await fetch('/api/discord-post-application', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ data, applicationId: applicationId || null })
     });
     if (!res.ok) {
-      console.warn('Discord webhook returned non-OK status:', res.status);
-      return;
-    }
-
-    // Parse the returned message so we can add reactions to it
-    const postedMessage = await res.json();
-    const channelId = postedMessage.channel_id;
-    const messageId = postedMessage.id;
-
-    // Add 👍 👎 vote reactions via our serverless helper
-    if (channelId && messageId) {
-      fetch('/api/discord-add-reactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ channel_id: channelId, message_id: messageId })
-      }).catch(err => console.warn('Failed to add reactions (non-fatal):', err));
+      const text = await res.text();
+      console.warn('Discord post endpoint returned non-OK:', res.status, text);
     }
   } catch (err) {
-    // Webhook failure is non-fatal — never block the user's submission
-    console.warn('Discord webhook failed (non-fatal):', err);
+    // Failure is non-fatal — never block the user's submission
+    console.warn('Discord post failed (non-fatal):', err);
   }
 }
 
