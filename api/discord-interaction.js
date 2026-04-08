@@ -192,6 +192,7 @@ async function handleButtonClick(payload) {
 
   const action = match[1]; // 'approve' or 'deny'
   const applicationId = match[2];
+  const isExternal = applicationId === 'external';
 
   // Permission check: does the clicker have the owner role?
   const memberRoles = payload.member?.roles || [];
@@ -206,7 +207,24 @@ async function handleButtonClick(payload) {
     };
   }
 
-  // Fetch the application to make sure it exists and isn't already decided
+  const clickerName = payload.member?.user?.username || payload.member?.user?.global_name || 'unknown';
+
+  // External (email) applications: pure cosmetic. Skip the Supabase update entirely.
+  if (isExternal) {
+    const updated = await editInteractionMessage(
+      'external',
+      payload.message,
+      action,
+      clickerName,
+      payload.member.user.id
+    );
+    return {
+      type: RESPONSE_TYPE_UPDATE_MESSAGE,
+      data: updated
+    };
+  }
+
+  // Logged-in applications: fetch + update the Supabase row
   let application;
   try {
     application = await supabaseGetApplication(applicationId);
@@ -243,14 +261,11 @@ async function handleButtonClick(payload) {
 
   // Update the application in Supabase
   const newStatus = action === 'approve' ? 'accepted' : 'denied';
-  const clickerName = payload.member?.user?.username || payload.member?.user?.global_name || 'unknown';
   try {
     await supabaseUpdateApplication(applicationId, {
       status: newStatus,
       staff_notes: `Decided via Discord by ${clickerName}`,
       reviewed_at: new Date().toISOString()
-      // Note: reviewed_by is a FK to profiles.id - we don't have a profile for the Discord
-      // user necessarily, so we leave it NULL. The staff_notes field records the acting user.
     });
   } catch (err) {
     console.error('Failed to update application:', err);
